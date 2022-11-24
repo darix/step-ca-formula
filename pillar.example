@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+# vim: ft=yaml
+---
+local_ca_user: 'saltstack@example.com'
+
+step:
+  ca:
+    enabled: True
+    password: "this is just a test"
+    name: "Example CA"
+    dns:
+      - ca.example.com
+    initial_provisioner: ca@example.com
+    provisioners:
+      acme:
+        options:
+          type: ACME
+      saltify@example.com:
+        options:
+          type: JWK
+          password: foobar
+          ssh: true
+      saltstack@example.com:
+        options:
+          type: JWK
+          password: foobar
+          ssh: true
+# TODO:
+#       settings:
+#         "forceCN": true
+#         "claims":
+#           "maxTLSCertDuration": "2160h0m0s"
+#           "defaultTLSCertDuration": "2160h0m0s"
+  defaults:
+    token:
+      lifetime: 60m
+  ssh:
+    sign_hosts_certs: True
+    principals:
+      - {{ grains.id }}
+  # TODO: find out how we can get the data via salt mine from the step-ca main host
+  client_config:
+    ca:
+      url:           "https://ca.example.com"
+      # optional
+      # contact_email: "ca@example.com"
+      root_cert:
+        fingerprint: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        # optional
+        # path:        "/usr/share/pki/trust/anchors/step-ca-at-home.crt.pem"
+  certificates:
+    # possible modes:
+    #
+    # tokens -> key/cert are generated on the minion and signed with token authentication
+    # certificates -> both are generated on the saltmaster and shipped via pillar
+    mode: tokens
+    host:
+      etcd:
+        affected_services:
+         - etcd.service
+        cn: {{ grains.id }}
+        san:
+          - {{ grains.id }}
+          - 127.0.0.1
+      patroni:
+        # cn: {{ grains.id }}
+        config:
+          kty: RSA
+        exec_start_post: '/bin/echo "Hello world"'
+      pg-ecdsa:
+        cn: {{ grains.id }}
+        exec_start_post:
+          - '/usr/bin/systemctl is-active postgresql.service && /usr/bin/systemctl try-reload-or-restart postgresql.service'
+      pg-rsa:
+        cn: {{ grains.id }}
+        config:
+          kty: RSA
+          size: 4096
+    user:
+      postgres:
+        cn: postgres
+        san:
+          - {{ grains.id }}
+          - 127.0.0.1
+        affected_services:
+          - postgresql.service
+      etcd:
+        affected_services:
+         - etcd.service
+        cn: etcd
+        san:
+          - {{ grains.id }}
+          - 127.0.0.1

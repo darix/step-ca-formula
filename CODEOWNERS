@@ -1,0 +1,14 @@
+# https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
+
+# SECTION: Owner(s) for everything in the repo, unless a later match takes precedence
+# FILE PATTERN                              OWNER(S)
+*                                           @darix
+
+# SECTION: Owner(s) for specific directories
+# FILE PATTERN                              OWNER(S)
+
+# SECTION: Owner(s) for files/directories related to `semantic-release`
+# FILE PATTERN                              OWNER(S)
+
+# SECTION: Owner(s) for specific files
+# FILE PATTERN                              OWNER(S)
