@@ -166,6 +166,13 @@ ExecStartPost=
                 ]
               }
             else:
+              config[section_name+'_service'] = {
+                'service.dead': [
+                  { 'name':     service      },
+                  { 'enable':   False        },
+                ]
+              }
+
               if 'affected_services' in cert_data:
                 for service in cert_data['affected_services']:
                   config[section_name + '_restart_service_{index}'.format(index=loop.counter)] = {
