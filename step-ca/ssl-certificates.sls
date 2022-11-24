@@ -17,11 +17,15 @@ def run():
       certificates_pillar = __pillar__['step']['certificates']
 
       certificate_mode = 'tokens'
+      certificate_mode_uses_renewer = True
 
       drop_in_paths = []
 
       if 'mode' in certificates_pillar:
         certificate_mode = certificates_pillar['mode']
+
+      if 'certificate_mode_uses_renewer' in certificates_pillar:
+        certificate_mode_uses_renewer = certificates_pillar['certificate_mode_uses_renewer']
 
       for cert_type in ['host', 'user']:
           scope_cert_pillar = certificates_pillar[cert_type]
@@ -125,39 +129,41 @@ ExecStartPost=
                 ]
               }
 
-            config[section_name+'_drop_in_dir'] = {
-              'file.directory': [
-                { 'name':  drop_in_dir },
-                { 'user':  'root'      },
-                { 'group': 'root'      },
-                { 'mode':  '0750'      },
-              ],
-            }
+            if certificate_mode_uses_renewer:
 
-            config[section_name+'_drop_in'] = {
-              'file.managed': [
-                { 'name':     drop_in_path    },
-                { 'user':     'root'          },
-                { 'group':    'root'          },
-                { 'mode':     '0640'          },
-                { 'contents': drop_in_content },
-                { 'require':  drop_in_deps    },
-              ],
-            }
+              config[section_name+'_drop_in_dir'] = {
+                'file.directory': [
+                  { 'name':  drop_in_dir },
+                  { 'user':  'root'      },
+                  { 'group': 'root'      },
+                  { 'mode':  '0750'      },
+                ],
+              }
 
-            config[section_name+'_service'] = {
-              'service.running': [
-                { 'name':     service      },
-                { 'enable':   True         },
-                { 'require':  service_deps },
-              ]
-            }
+              config[section_name+'_drop_in'] = {
+                'file.managed': [
+                  { 'name':     drop_in_path    },
+                  { 'user':     'root'          },
+                  { 'group':    'root'          },
+                  { 'mode':     '0640'          },
+                  { 'contents': drop_in_content },
+                  { 'require':  drop_in_deps    },
+                ],
+              }
 
-            config['stepca_systemd_daemon_reload'] = {
-              'module.run': [
-                { 'name':       'service.systemctl_reload' },
-                { 'onchanges':  drop_in_paths              },
-              ]
-            }
+              config[section_name+'_service'] = {
+                'service.running': [
+                  { 'name':     service      },
+                  { 'enable':   True         },
+                  { 'require':  service_deps },
+                ]
+              }
+
+              config['stepca_systemd_daemon_reload'] = {
+                'module.run': [
+                  { 'name':       'service.systemctl_reload' },
+                  { 'onchanges':  drop_in_paths              },
+                ]
+              }
 
     return config

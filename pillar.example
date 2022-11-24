@@ -54,6 +54,7 @@ step:
     # tokens -> key/cert are generated on the minion and signed with token authentication
     # certificates -> both are generated on the saltmaster and shipped via pillar
     mode: tokens
+    certificate_mode_uses_renewer: True
     host:
       etcd:
         affected_services:
