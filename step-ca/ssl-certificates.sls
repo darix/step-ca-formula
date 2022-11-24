@@ -165,7 +165,28 @@ ExecStartPost=
                   { 'onchanges':  drop_in_paths              },
                 ]
               }
-            # else:
-              # TODO: implement restarting services here.
+            else:
+              if 'affected_services' in cert_data:
+                for service in cert_data['affected_services']:
+                  config[section_name + '_restart_service_{index}'.format(index=loop.counter)] = {
+                    'cmd.run': [
+                      { 'name': "/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service) }
+                    ]
+                  }
+
+              if 'exec_start_post' in cert_data:
+                if isinstance(cert_data['exec_start_post'], str):
+                    config[section_name + '_exec_start_post'] = {
+                      'cmd.run': [
+                        { 'name': cert_data['exec_start_post'] }
+                      ]
+                    }
+                else:
+                  for line in cert_data['exec_start_post']:
+                    config[section_name + '_exec_start_post_{index}'.format(index=loop.counter)] = {
+                      'cmd.run': [
+                        { 'name': line }
+                      ]
+                    }
 
     return config
