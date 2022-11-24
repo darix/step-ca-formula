@@ -165,5 +165,7 @@ ExecStartPost=
                   { 'onchanges':  drop_in_paths              },
                 ]
               }
+            # else:
+              # TODO: implement restarting services here.
 
     return config
