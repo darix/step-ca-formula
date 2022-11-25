@@ -16,6 +16,7 @@
 #
 
 from salt.modules.cmdmod import run_stdout as cmdrun
+import salt.utils.data
 import logging
 import os.path
 import os
@@ -89,20 +90,9 @@ class StepCACLient:
     else:
       return ''
 
-  def get_pillar_item_with_path(self, path):
-    pillar_items=path.split(':')
-    local_pillar = self.pillar
-    for pillar_item in pillar_items:
-      if pillar_item in local_pillar:
-        local_pillar = local_pillar[pillar_item]
-      else:
-        return None
-    if local_pillar:
-      return local_pillar
-
   def master_setting_or_pillar_or_default(self, setting_name, pillar_path, default_value):
 
-    value = self.get_pillar_item_with_path(pillar_path)
+    value = salt.utils.data.traverse_dict_and_list(self.pillar, pillar_path)
     if value:
       return value
 
