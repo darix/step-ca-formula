@@ -1,7 +1,7 @@
 #!py
 step_dir = '/etc/step'
 def run():
-  ca_pillar = __pillar__['step']['ca']
+  ca_pillar = __pillar__['step']['client_config']['ca']
   context = {
     'ca-url': ca_pillar['url'],
     'fingerprint': ca_pillar['root_cert']['fingerprint']
@@ -14,12 +14,12 @@ def run():
     context['root'] = ca_pillar['root_cert']['path']
 
   config = {
-    'step_client_package' = {
+    'step_client_package': {
       'pkg.installed': [
           { 'names': [ 'step-cli',  ] },
         ]
       },
-    'step_client_config' = {
+    'step_client_config': {
       'file.managed': [
         { 'user':     'root' },
         { 'group':    'root' },
