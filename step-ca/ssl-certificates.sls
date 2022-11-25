@@ -173,6 +173,7 @@ ExecStartPost=
                 ]
               }
 
+              # TODO: we could also use the require_in or so here to trigger services configured via salt
               if 'affected_services' in cert_data:
                 for service in cert_data['affected_services']:
                   config[section_name + '_restart_service_{index}'.format(index=loop.counter)] = {
