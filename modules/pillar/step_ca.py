@@ -199,19 +199,19 @@ class StepCACLient:
             token=self.run_token_command(common_name, cmd_line_options)
 
 
-          cert_filename = self.ssl_name_pattern.format(
-              cert_dir=self.ssl_cert_dir,
-              cert_name=cert_name,
-              cert_type=cert_type,
-              extension='cert.pem'
-            )
+            cert_filename = self.ssl_name_pattern.format(
+                cert_dir=self.ssl_cert_dir,
+                cert_name=cert_name,
+                cert_type=cert_type,
+                extension='cert.pem'
+              )
 
-          key_filename = self.ssl_name_pattern.format(
-              cert_dir=self.ssl_cert_dir,
-              cert_name=cert_name,
-              cert_type=cert_type,
-              extension='key.pem'
-            )
+            key_filename = self.ssl_name_pattern.format(
+                cert_dir=self.ssl_cert_dir,
+                cert_name=cert_name,
+                cert_type=cert_type,
+                extension='key.pem'
+              )
 
             if "certificates" == self.mode:
               key, cert=self.run_cert_command(common_name, token, options)
