@@ -1,10 +1,1 @@
-{
-  "ca-url":      "{{ pillar.step.client_config.ca.url }}",
-  "fingerprint": "{{ pillar.step.client_config.ca.root_cert.fingerprint }}",
-  {%- if 'path' in pillar.step.client_config.ca.root_cert %}
-  "root":        "{{ pillar.step.client_config.ca.root_cert.path }}",
-  {%- endif %}
-  {%- if 'contact_email' in pillar.step.client_config.ca.root_cert %}
-  "contact":     "{{ pillar.step.client_config.ca.contact_email }}",
-  {%- endif %}
-}
+{{ config | json }}
