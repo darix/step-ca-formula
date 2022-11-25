@@ -30,7 +30,9 @@ def run():
         token=token,
         options=options,
         key_path=key_path,
+        crt_path=crt_path
       )
+
       service      = 'ssh-cert-renewer@{instance}.timer'.format(instance=key_type)
 
       config[section_name] = {
@@ -61,10 +63,12 @@ def run():
         { 'mode':     '0644'                    },
         { 'contents': ssh_hosts_keys_config     },
       ],
+    }
+    config['sshd_reload'] = {
       'cmd.run': [
         { 'name':      sshd_reload_cmdline           },
-        { 'require':   [ sshd_config_snippet_file, ] },
-        { 'onchanges': [ sshd_config_snippet_file, ] },
+        # { 'require':   [ sshd_config_snippet_file, ] },
+        # { 'onchanges': [ sshd_config_snippet_file, ] },
       ]
     }
 
