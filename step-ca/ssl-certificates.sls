@@ -120,9 +120,10 @@ ExecStartPost=
                   { 'name':    cmdline                   },
                   { 'env':     cmdline_env               },
                   { 'require': [ 'step_client_config', ] },
-                  { 'creates': [ crt_path, key_path, ]   },
                 ]
               }
+              if not(force_deploy):
+                config[section_name+'_token_cmd']['cmd.run'].append({ 'creates': [ crt_path, key_path, ]})
 
             elif 'certificates' == certificate_mode:
 
@@ -150,6 +151,9 @@ ExecStartPost=
                   { 'require':  [ 'step_client_config', ] },
                 ]
               }
+              if not(force_deploy):
+                config[section_name+'_key']['file.managed'].append({ 'creates': [ crt_path, key_path, ]})
+                config[section_name+'_cert']['file.managed'].append({ 'creates': [ crt_path, key_path, ]})
 
             if certificate_mode_uses_renewer:
 
