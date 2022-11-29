@@ -25,7 +25,6 @@ def patch_provisioner_config(needle, config):
     pathname = "/var/lib/step-ca/.step/config/ca.json"
 
     log.error("New config: {config}".format(config=config))
-    json_string = ""
 
     with open(pathname, "r+") as open_file:
         parsed_config = json.load(open_file)
