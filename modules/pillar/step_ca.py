@@ -126,16 +126,16 @@ class StepCACLient:
     os.remove(filename)
     return return_data
 
-  def get_me_a_stupid_tempfile(self):
+  def tempfile_name(self):
     # TODO: this needs better error handling
     fd, tmpfile = tempfile.mkstemp()
     # without the close salt keeps the file open and step cli doesnt want to write to it.
     os.close(fd)
     return tmpfile
 
-  def run_cert_command(self, common_name, token, cert_options):
-    key_tmp_filename  = self.get_me_a_stupid_tempfile()
-    cert_tmp_filename = self.get_me_a_stupid_tempfile()
+  def run_ssl_cert_command(self, common_name, token, cert_options):
+    key_tmp_filename  = self.tempfile_name()
+    cert_tmp_filename = self.tempfile_name()
 
     cmd_line='{step} ca certificate --force --token {token} --provisioner {provisioner} --provisioner-password-file={provisioner_password_file} --not-after={cert_timeout} {cert_options} {common_name} {cert_tmp_filename} {key_tmp_filename}'.format(
         step=self.step_binary,
