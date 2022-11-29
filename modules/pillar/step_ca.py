@@ -30,7 +30,8 @@ class StepCACLient:
     self.pillar    = pillar
     self.master_config = __opts__
 
-    self.mode = self.master_setting_or_pillar_or_default('certificate_mode',  'step:certificates:mode', 'tokens')
+    # TODO: this needs to be moved to a better path in the pillar tree.
+    self.mode = self.master_setting_or_pillar_or_default('certificate_mode',  'step:client_config:certificate_mode', 'tokens')
 
     self.step_binary   = '/usr/bin/step'
     self.salt_step_dir = '/etc/salt/step'
