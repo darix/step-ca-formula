@@ -156,23 +156,62 @@ class StepCACLient:
 
     return self.read_and_cleanup(key_tmp_filename),  self.read_and_cleanup(cert_tmp_filename)
 
+  def run_ssh_cert_command(self, token, key, common_name, options):
+
+      key_tmp_filename  = self.tempfile_name()
+      cert_tmp_filename = "{key_filename}-cert.pub".format(key_filename=key_tmp_filename)
+
+      with open(key_tmp_filename, 'w') as f:
+        f.write(key)
+
+      cmd_line      = '/usr/bin/step ssh certificate --force --token="{token}" --sign --host --host-id=machine {options} "{commonname}" "{key_path}"'.format(
+        commonname=common_name,
+        token=token,
+        options=options,
+        key_path=key_tmp_filename,
+      )
+
+      log.info(cmd_line)
+
+      cmdrun(
+        cmd=cmd_line,
+        env=self.cmd_env,
+      )
+
+      os.remove(key_tmp_filename)
+
+      if not(os.path.exists(cert_tmp_filename)):
+        return None
+
+      return self.read_and_cleanup(cert_tmp_filename)
+
   def do_ssh_tokens(self):
     if 'ssh' in self.pillar['step'] and 'sign_hosts_certs' in self.pillar['step']['ssh'] and self.pillar['step']['ssh']['sign_hosts_certs']:
       self.step_pillar['step']['ssh']={}
+      self.step_pillar['step']['ssh']['certs']={}
 
-      for key_type in self.ssh_key_types:
-        cmd_line_options = '--ssh --host '
+      cmd_line_options = '--ssh --host '
 
-        principal_options = ''
-        if 'principals' in self.pillar['step']['ssh']:
-          principal_options = self.list_to_options_string('principal', self.pillar['step']['ssh']['principals'])
-        cmd_line_options += principal_options
+      principal_options = ''
+      if 'principals' in self.pillar['step']['ssh']:
+        principal_options = self.list_to_options_string('principal', self.pillar['step']['ssh']['principals'])
+      cmd_line_options += principal_options
 
+      pubkey_grains = __grains__['ssh']['hostkeys']['pubkeys']
+      for key_type, key in pubkey_grains.items():
+        # TODO: throw error if key_type is not in ssh_key_types list
         token=self.run_token_command(self.minion_id, cmd_line_options)
 
-        self.step_pillar['step']['ssh'][key_type]={
-          'token':token,
-        }
+        if "certificates" == self.mode:
+            cert=self.run_ssh_cert_command(token, key, self.minion_id, principal_options)
+            if cert:
+              self.step_pillar['step']['ssh']['certs'][key_type]={
+                'cert': cert,
+              }
+        elif "tokens" == self.mode:
+            self.step_pillar['step']['ssh']['certs'][key_type]={
+              'token': token,
+            }
 
   def do_ssl_certificates(self):
     if 'step' in self.pillar and 'certificates' in self.pillar['step']:
