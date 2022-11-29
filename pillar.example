@@ -38,9 +38,19 @@ step:
     sign_hosts_certs: True
     principals:
       - {{ grains.id }}
-  # TODO: find out how we can get the data via salt mine from the step-ca main host
   client_config:
+  client_config:
+    # possible modes:
+    #
+    # tokens -> key/cert are generated on the minion and signed with token authentication
+    # certificates -> both are generated on the saltmaster and shipped via pillar
+    certificate_mode: tokens
+    # use systemd timer based renewer services?
+    certificate_use_renewer: False
+    # Ignore if certificates/keys are already created. Overwrite them.
+    force_deploy: False
     ca:
+      # TODO: find out how we can get the data via salt mine from the step-ca main host
       url:           "https://ca.example.com"
       # optional
       # contact_email: "ca@example.com"
@@ -49,12 +59,6 @@ step:
         # optional
         # path:        "/usr/share/pki/trust/anchors/step-ca-at-home.crt.pem"
   certificates:
-    # possible modes:
-    #
-    # tokens -> key/cert are generated on the minion and signed with token authentication
-    # certificates -> both are generated on the saltmaster and shipped via pillar
-    mode: tokens
-    certificate_mode_uses_renewer: True
     host:
       etcd:
         affected_services:
