@@ -30,12 +30,13 @@ def patch_provisioner_config(needle, config):
     with open(pathname, "r+") as open_file:
         parsed_config = json.load(open_file)
 
+    changed_settings = []
+
     provisioners = parsed_config["authority"]["provisioners"]
     for provisioner in provisioners:
         if provisioner["name"] != needle:
             continue
 
-        changed_settings = []
         for option, value in config.items():
             log.error(
                 "Setting {option} for {value}".format(
