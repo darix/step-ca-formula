@@ -155,7 +155,7 @@ ExecStartPost=
                 config[section_name+'_key']['file.managed'].append({ 'creates': [ crt_path, key_path, ]})
                 config[section_name+'_cert']['file.managed'].append({ 'creates': [ crt_path, key_path, ]})
 
-            if certificate_mode_uses_renewer:
+            if uses_renewer:
 
               config[section_name+'_drop_in_dir'] = {
                 'file.directory': [
