@@ -7,6 +7,14 @@ https://smallstep.com
 You will need the `step` and `step-ca` binary. For openSUSE/SLE you can use the packages
 from `home:darix:apps`.
 
+## What can the formula do?
+
+1. setup a CA
+2. deploy ssl/ssh certs via a token and optionally enable the renewer services
+3. deploy ssl/ssh certs via pillars (no connection from the minion to the CA needed)
+4. restart affected services or even run custom commands after installing new certificates
+   (for both renewer and salt only mode)
+
 ## Required salt master config:
 
 ```
