@@ -49,8 +49,7 @@ def run():
       if 'certificate_use_renewer' in client_config_pillar:
         uses_renewer = client_config_pillar['certificate_use_renewer']
 
-      for cert_type in ['host', 'user']:
-          scope_cert_pillar = certificates_pillar[cert_type]
+      for cert_type , scope_cert_pillar in certificates_pillar.items():
 
           for cert_name, cert_data in scope_cert_pillar.items():
 
