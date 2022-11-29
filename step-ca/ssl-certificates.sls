@@ -29,20 +29,25 @@ def run():
 
     step_pillar = __pillar__['step']
 
+    client_config_pillar = step_pillar['client_config']
+
     if 'certificates' in step_pillar:
 
       certificates_pillar = __pillar__['step']['certificates']
 
       certificate_mode = 'tokens'
-      certificate_mode_uses_renewer = True
+      uses_renewer = True
 
       drop_in_paths = []
 
-      if 'mode' in certificates_pillar:
-        certificate_mode = certificates_pillar['mode']
+      if 'certificate_mode' in client_config_pillar:
+        certificate_mode = client_config_pillar['certificate_mode']
 
-      if 'certificate_mode_uses_renewer' in certificates_pillar:
-        certificate_mode_uses_renewer = certificates_pillar['certificate_mode_uses_renewer']
+      if 'force_deploy' in client_config_pillar:
+        force_deploy = client_config_pillar['force_deploy']
+
+      if 'certificate_use_renewer' in client_config_pillar:
+        uses_renewer = client_config_pillar['certificate_use_renewer']
 
       for cert_type in ['host', 'user']:
           scope_cert_pillar = certificates_pillar[cert_type]
