@@ -41,7 +41,7 @@ def patch_provisioner_config(needle, config):
                 changed_settings.append(option)
                 provisioner[option] = value
 
-        # dump to a string first to avoid truncating file and failing to dump afterwards
+        # dump to a string first to avoid leaving us with a truncated file when dump fails
         json_string = json.dumps(parsed_config, indent=4)
         open_file.seek(0)
         open_file.truncate()
