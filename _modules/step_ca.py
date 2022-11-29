@@ -38,14 +38,11 @@ def patch_provisioner_config(needle, config):
             continue
 
         for option, value in config.items():
-            log.error(
-                "Setting {option} for {value}".format(
-                    option=option, value=value
-                )
-            )
+            log.error(f"Setting {option} for {value}")
             if provisioner[option] != value:
                 changed_settings.append(option)
                 provisioner[option] = value
+
         json_string = json.dumps(parsed_config, indent=4)
         open_file.seek(0)
         open_file.truncate()
