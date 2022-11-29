@@ -23,8 +23,7 @@ log = logging.getLogger(__name__)
 
 def patch_provisioner_config(needle, config):
     pathname = "/var/lib/step-ca/.step/config/ca.json"
-
-    log.error("New config: {config}".format(config=config))
+    log.error(f"New config: {config}")
 
     with open(pathname, "r+") as open_file:
         parsed_config = json.load(open_file)
@@ -42,6 +41,7 @@ def patch_provisioner_config(needle, config):
                 changed_settings.append(option)
                 provisioner[option] = value
 
+        # dump to a string first to avoid truncating file and failing to dump afterwards
         json_string = json.dumps(parsed_config, indent=4)
         open_file.seek(0)
         open_file.truncate()
