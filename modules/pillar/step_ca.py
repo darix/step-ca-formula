@@ -261,7 +261,7 @@ class StepCACLient:
               )
 
             if "certificates" == self.mode:
-              key, cert=self.run_cert_command(common_name, token, options)
+              key, cert=self.run_ssl_cert_command(common_name, token, options)
               self.step_pillar['step']['certificates'][cert_type][cert_name]={
                 'key_filename': key_filename,
                 'cert_filename': cert_filename,
