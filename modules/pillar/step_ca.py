@@ -219,6 +219,7 @@ class StepCACLient:
 
       cert_pillar = self.pillar['step']['certificates']
 
+      # TODO: maybe replace this with a .items() loop and only verify that we know the cert_type
       for cert_type in self.cert_scopes:
 
         if cert_type in cert_pillar:
