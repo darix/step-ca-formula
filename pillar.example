@@ -39,7 +39,6 @@ step:
     principals:
       - {{ grains.id }}
   client_config:
-  client_config:
     # possible modes:
     #
     # tokens -> key/cert are generated on the minion and signed with token authentication
