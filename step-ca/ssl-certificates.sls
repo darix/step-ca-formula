@@ -36,6 +36,10 @@ def run():
 
         certificate_mode = "tokens"
         uses_renewer = True
+        ssl_generate_dhparams = True
+        dhparam_length = 2048
+        dhparam_file = "{cert_dir}/dhparams".format(cert_dir=certificate_based_dir)
+        dhparam_content = None
 
         drop_in_paths = []
 
@@ -47,6 +51,32 @@ def run():
 
         if "certificate_use_renewer" in client_config_pillar:
             uses_renewer = client_config_pillar["certificate_use_renewer"]
+
+        if "ssl_generate_dhparams" in client_config_pillar:
+            ssl_generate_dhparams = client_config_pillar["ssl_generate_dhparams"]
+
+        if "ssl_merged_certificates" in client_config_pillar:
+            ssl_merged_certificates = client_config_pillar["ssl_merged_certificates"]
+
+        if "dhparam_length" in client_config_pillar:
+            dhparam_length = client_config_pillar["dhparam_length"]
+
+        if ssl_generate_dhparams:
+            dhparam_cmdline = "/usr/bin/openssl dhparam -out {dhparam_file} {dhparam_length}".format(
+                dhparam_file=dhparam_file,
+                dhparam_length=dhparam_length,
+            )
+
+            config["generate_dhparams"] = {
+                "cmd.run": [
+                    {"name": dhparam_cmdline},
+                    {"hide_output": True},
+                    {"output_loglevel": "debug"},
+                ]
+            }
+
+            if not (force_deploy):
+                config["generate_dhparams"]["cmd.run"].append( {"creates": dhparam_file} )
 
         for cert_type, scope_cert_pillar in certificates_pillar.items():
 

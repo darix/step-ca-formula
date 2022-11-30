@@ -44,6 +44,7 @@ step:
     certificate_mode: tokens
     # use systemd timer based renewer services?
     certificate_use_renewer: False
+    ssl_generate_dhparams: True
     # Ignore if certificates/keys are already created. Overwrite them.
     force_deploy: False
     ca:
