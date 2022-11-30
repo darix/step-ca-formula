@@ -200,12 +200,15 @@ ExecStartPost=
 
               # TODO: we could also use the require_in or so here to trigger services configured via salt
               if 'affected_services' in cert_data:
+                loop_counter=0
+
                 for service in cert_data['affected_services']:
-                  config[section_name + '_restart_service_{index}'.format(index=loop.counter)] = {
+                  config[section_name + '_restart_service_{index}'.format(index=loop_counter)] = {
                     'cmd.run': [
                       { 'name': "/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service) }
                     ]
                   }
+                  loop_counter+=1
 
               if 'exec_start_post' in cert_data:
                 if isinstance(cert_data['exec_start_post'], str):
@@ -216,10 +219,13 @@ ExecStartPost=
                     }
                 else:
                   for line in cert_data['exec_start_post']:
-                    config[section_name + '_exec_start_post_{index}'.format(index=loop.counter)] = {
+                    loop_counter=0
+
+                    config[section_name + '_exec_start_post_{index}'.format(index=loop_counter)] = {
                       'cmd.run': [
                         { 'name': line }
                       ]
                     }
+                    loop_counter+=1
 
     return config
