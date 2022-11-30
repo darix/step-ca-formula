@@ -89,7 +89,6 @@ def run():
           ],
         }
 
-
       if 'cert' in cert_data:
         section_type = 'file.managed'
 
