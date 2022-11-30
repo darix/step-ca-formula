@@ -64,6 +64,7 @@ def run():
 
       ssh_hosts_keys_config += "HostCertificate /etc/ssh/ssh_host_{key_type}_key-cert.pub\n".format(key_type=key_type)
 
+      renewal_check_cmdline = '/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}'.format(crt_path=crt_path)
 
       section_type = None
       if 'token' in cert_data:
@@ -75,7 +76,6 @@ def run():
           crt_path=crt_path
         )
 
-        renewal_check_cmdline = '/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}'.format(crt_path=crt_path)
 
         section_type = 'cmd.run'
 
@@ -100,6 +100,7 @@ def run():
             { 'group':    'root'                    },
             { 'mode':     '0640'                    },
             { 'contents': cert_data['cert']         },
+            { 'onlyif':  renewal_check_cmdline     },
             { 'require':  [ 'step_client_config', ] },
           ]
         }
