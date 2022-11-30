@@ -15,9 +15,25 @@ from `home:darix:apps`.
 4. restart affected services or even run custom commands after installing new certificates
    (for both renewer and salt only mode)
 
+## installation
+
+1. install formula
+2. if you have an existing step-ca instance ... add a provisioner to your current instance with
+
+```
+su -s /bin/bash - _step-ca
+pwgen 64 1 > salt-password
+step ca provisioner add saltstack@example.com --create --ssh --password-file=$PWD/salt-password
+```
+
+install -D -d -m 0750 /etc/salt/step{,/config}
+install -o root -g salt -m 0640 ~_step-ca/salt-password /etc/salt/step/config/password
+
 ## Required salt master config:
 
 ```
+local_ca_user: saltstack@example.com
+
 file_roots:
   base:
     - {{ salt_base_dir }}/salt
