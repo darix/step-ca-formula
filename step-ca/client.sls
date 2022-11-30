@@ -33,12 +33,7 @@ def run():
     config = {
         "step_client_package": {
             "pkg.installed": [
-                {
-                    "names": [
-                        "step-cli",
-                        "step-cli-salt",
-                    ]
-                },
+                {"names": [ "step-cli", "step-cli-salt", "openssl", ]},
             ]
         },
         "step_client_config": {
@@ -47,16 +42,10 @@ def run():
                 {"group": "root"},
                 {"mode": "0640"},
                 {"template": "jinja"},
-                {
-                    "require": [
-                        "step_client_package",
-                    ]
-                },
+                {"require": [ "step_client_package", ]},
                 {"name": "{step_dir}/config/defaults.json".format(step_dir=step_dir)},
                 {"source": "salt://step-ca/files/etc/step/config/defaults.json.j2"},
-                {
-                    "context": {"config": context},
-                },
+                {"context": {"config": context} },
             ]
         },
     }
