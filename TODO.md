@@ -3,3 +3,4 @@
     check-renewal call working within salt
 
 - nothing deploys /etc/salt/step/config/defaults.json
+- error handling for step calls
