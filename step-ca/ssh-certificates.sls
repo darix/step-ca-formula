@@ -75,12 +75,17 @@ def run():
           crt_path=crt_path
         )
 
+        renewal_check_cmdline = '/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}'.format(crt_path=crt_path)
+
         section_type = 'cmd.run'
 
         config[section_name] = {
           section_type: [
             { 'name':    cmdline                   },
             { 'require': [ 'step_client_config', ] },
+            { 'hide_output': True                  },
+            { 'output_loglevel': 'debug'           },
+            { 'onlyif':  renewal_check_cmdline     },
           ],
         }
 
@@ -140,6 +145,8 @@ def run():
         { 'name':      sshd_reload_cmdline           },
         { 'require':   [ sshd_config_snippet_file, ] },
         { 'onchanges': [ sshd_config_snippet_file, ] },
+        { 'hide_output': True                        },
+        { 'output_loglevel': 'debug'                 },
       ]
     }
 

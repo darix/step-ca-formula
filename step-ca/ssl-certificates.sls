@@ -101,6 +101,7 @@ ExecStartPost=
                   drop_in_content+="ExecStartPost={line}\n".format(line=line)
 
             config[section_name] = {}
+            renewal_check_cmdline = '/usr/sbin/step-ssl-cert-needs-renewal-for-salt {crt_path}'.format(crt_path=crt_path)
 
             if 'tokens' == certificate_mode:
               # we do not need to specify the --san entries here as they are encoded in the token.
@@ -118,6 +119,9 @@ ExecStartPost=
                 'cmd.run': [
                   { 'name':    cmdline                   },
                   { 'env':     cmdline_env               },
+                  { 'onlyif':  renewal_check_cmdline     },
+                  { 'hide_output': True                  },
+                  { 'output_loglevel': 'debug'           },
                   { 'require': [ 'step_client_config', ] },
                 ]
               }
@@ -135,6 +139,7 @@ ExecStartPost=
                   { 'user':     'root'                   },
                   { 'group':    'root'                   },
                   { 'mode':     '0640'                   },
+                  { 'onlyif':  renewal_check_cmdline     },
                   { 'contents': cert_data['key']         },
                   { 'require':  [ 'step_client_config' ] },
                 ]
@@ -146,6 +151,7 @@ ExecStartPost=
                   { 'user':     'root'                    },
                   { 'group':    'root'                    },
                   { 'mode':     '0640'                    },
+                  { 'onlyif':  renewal_check_cmdline     },
                   { 'contents': cert_data['cert']         },
                   { 'require':  [ 'step_client_config', ] },
                 ]
@@ -205,7 +211,9 @@ ExecStartPost=
                 for service in cert_data['affected_services']:
                   config[section_name + '_restart_service_{index}'.format(index=loop_counter)] = {
                     'cmd.run': [
-                      { 'name': "/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service) }
+                      { 'name': "/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service) },
+                      { 'hide_output': True                  },
+                      { 'output_loglevel': 'debug'           },
                     ]
                   }
                   loop_counter+=1
@@ -214,7 +222,9 @@ ExecStartPost=
                 if isinstance(cert_data['exec_start_post'], str):
                     config[section_name + '_exec_start_post'] = {
                       'cmd.run': [
-                        { 'name': cert_data['exec_start_post'] }
+                        { 'name': cert_data['exec_start_post'] },
+                        { 'hide_output': True                  },
+                        { 'output_loglevel': 'debug'           },
                       ]
                     }
                 else:
@@ -223,7 +233,9 @@ ExecStartPost=
 
                     config[section_name + '_exec_start_post_{index}'.format(index=loop_counter)] = {
                       'cmd.run': [
-                        { 'name': line }
+                        { 'name': line },
+                        { 'hide_output': True                  },
+                        { 'output_loglevel': 'debug'           },
                       ]
                     }
                     loop_counter+=1

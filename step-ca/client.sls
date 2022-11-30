@@ -34,7 +34,7 @@ def run():
   config = {
     'step_client_package': {
       'pkg.installed': [
-          { 'names': [ 'step-cli',  ] },
+          { 'names': [ 'step-cli', 'step-cli-salt', ] },
         ]
       },
     'step_client_config': {
