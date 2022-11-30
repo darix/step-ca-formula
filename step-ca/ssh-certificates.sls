@@ -18,136 +18,162 @@
 #
 
 # TODO: get the cert dir from the pillar
-step_path = '/etc/step'
-certificate_based_dir = '{step_path}/certs'.format(step_path=step_path)
-cmdline_env = {
-  'STEPPATH': step_path
-}
+step_path = "/etc/step"
+certificate_based_dir = "{step_path}/certs".format(step_path=step_path)
+cmdline_env = {"STEPPATH": step_path}
+
 
 def run():
-  config = {}
+    config = {}
 
-  ssh_key_types = ['ecdsa', 'ed25519', 'rsa']
+    ssh_key_types = ["ecdsa", "ed25519", "rsa"]
 
-  step_pillar = __pillar__['step']
+    step_pillar = __pillar__["step"]
 
-  client_config_pillar = step_pillar['client_config']
+    client_config_pillar = step_pillar["client_config"]
 
-  certificate_mode = 'tokens'
-  uses_renewer = True
-  force_deploy = False
+    certificate_mode = "tokens"
+    uses_renewer = True
+    force_deploy = False
 
-  service_reload_deps = []
+    service_reload_deps = []
 
-  if 'certificate_mode' in client_config_pillar:
-    certificate_mode = client_config_pillar['certificate_mode']
+    if "certificate_mode" in client_config_pillar:
+        certificate_mode = client_config_pillar["certificate_mode"]
 
-  if 'force_deploy' in client_config_pillar:
-    force_deploy = client_config_pillar['force_deploy']
+    if "force_deploy" in client_config_pillar:
+        force_deploy = client_config_pillar["force_deploy"]
 
-  if 'certificate_use_renewer' in client_config_pillar:
-    uses_renewer = client_config_pillar['certificate_use_renewer']
+    if "certificate_use_renewer" in client_config_pillar:
+        uses_renewer = client_config_pillar["certificate_use_renewer"]
 
-  if 'ssh' in step_pillar and 'sign_hosts_certs' in step_pillar['ssh'] and step_pillar['ssh']['sign_hosts_certs']:
-    ssh_pillar=step_pillar['ssh']['certs']
+    if "ssh" in step_pillar and "sign_hosts_certs" in step_pillar["ssh"] and step_pillar["ssh"]["sign_hosts_certs"]:
+        ssh_pillar = step_pillar["ssh"]["certs"]
 
-    ssh_hosts_keys_config = ""
+        ssh_hosts_keys_config = ""
 
-    for key_type, cert_data in ssh_pillar.items():
-      host_id      = __grains__['id']
-      section_name = 'step_client_{key_type}_ssh_host_key'.format( key_type=key_type, )
-      key_path     = '/etc/ssh/ssh_host_{key_type}_key.pub'.format( key_type=key_type, )
-      crt_path     = '/etc/ssh/ssh_host_{key_type}_key-cert.pub'.format( key_type=key_type, )
-      service      = 'ssh-cert-renewer@{instance}.timer'.format(instance=key_type)
+        for key_type, cert_data in ssh_pillar.items():
+            host_id = __grains__["id"]
+            section_name = "step_client_{key_type}_ssh_host_key".format(
+                key_type=key_type,
+            )
+            key_path = "/etc/ssh/ssh_host_{key_type}_key.pub".format(
+                key_type=key_type,
+            )
+            crt_path = "/etc/ssh/ssh_host_{key_type}_key-cert.pub".format(
+                key_type=key_type,
+            )
+            service = "ssh-cert-renewer@{instance}.timer".format(instance=key_type)
 
-      options      = ''
+            options = ""
 
-      ssh_hosts_keys_config += "HostCertificate /etc/ssh/ssh_host_{key_type}_key-cert.pub\n".format(key_type=key_type)
+            ssh_hosts_keys_config += "HostCertificate /etc/ssh/ssh_host_{key_type}_key-cert.pub\n".format(key_type=key_type)
 
-      renewal_check_cmdline = '/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}'.format(crt_path=crt_path)
+            renewal_check_cmdline = "/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}".format(crt_path=crt_path)
 
-      section_type = None
-      if 'token' in cert_data:
-        cmdline      = '/usr/bin/step ssh certificate --force --token="{token}" --sign --host --host-id=machine {options} "{commonname}" "{key_path}"'.format(
-          commonname=host_id,
-          token=cert_data['token'],
-          options=options,
-          key_path=key_path,
-          crt_path=crt_path
-        )
+            section_type = None
+            if "token" in cert_data:
+                cmdline = '/usr/bin/step ssh certificate --force --token="{token}" --sign --host --host-id=machine {options} "{commonname}" "{key_path}"'.format(
+                    commonname=host_id, token=cert_data["token"], options=options, key_path=key_path, crt_path=crt_path
+                )
 
+                section_type = "cmd.run"
 
-        section_type = 'cmd.run'
+                config[section_name] = {
+                    section_type: [
+                        {"name": cmdline},
+                        {
+                            "require": [
+                                "step_client_config",
+                            ]
+                        },
+                        {"hide_output": True},
+                        {"output_loglevel": "debug"},
+                        {"onlyif": renewal_check_cmdline},
+                    ],
+                }
 
-        config[section_name] = {
-          section_type: [
-            { 'name':    cmdline                   },
-            { 'require': [ 'step_client_config', ] },
-            { 'hide_output': True                  },
-            { 'output_loglevel': 'debug'           },
-            { 'onlyif':  renewal_check_cmdline     },
-          ],
+            if "cert" in cert_data:
+                section_type = "file.managed"
+
+                config[section_name] = {
+                    section_type: [
+                        {"name": crt_path},
+                        {"user": "root"},
+                        {"group": "root"},
+                        {"mode": "0640"},
+                        {"contents": cert_data["cert"]},
+                        {"onlyif": renewal_check_cmdline},
+                        {
+                            "require": [
+                                "step_client_config",
+                            ]
+                        },
+                    ]
+                }
+
+            if not (force_deploy):
+                config[section_name][section_type].append(
+                    {
+                        "creates": [
+                            crt_path,
+                        ]
+                    }
+                )
+
+            service_reload_deps.append(crt_path)
+
+            if uses_renewer:
+                config[section_name + "_renewer_service"] = {
+                    "service.running": [
+                        {"name": service},
+                        {"enable": True},
+                        {
+                            "require": [
+                                section_name,
+                            ]
+                        },
+                    ]
+                }
+            else:
+                config[section_name + "_renewer_service"] = {
+                    "service.dead": [
+                        {"name": service},
+                        {"enable": False},
+                    ]
+                }
+
+        sshd_config_snippet_file = "/etc/ssh/sshd_config.d/enable_host_certs.conf"
+        sshd_reload_cmdline = "/usr/bin/systemctl is-active sshd > /dev/null && /usr/bin/systemctl reload sshd"
+
+        service_reload_deps.append(sshd_config_snippet_file)
+
+        # TODO: this should be done with our pillar based ssh config
+        config["sshd_config_enable_certs"] = {
+            "file.managed": [
+                {"name": sshd_config_snippet_file},
+                {"user": "root"},
+                {"group": "root"},
+                {"mode": "0644"},
+                {"contents": ssh_hosts_keys_config},
+            ],
+        }
+        config["sshd_reload"] = {
+            "cmd.run": [
+                {"name": sshd_reload_cmdline},
+                {
+                    "require": [
+                        sshd_config_snippet_file,
+                    ]
+                },
+                {
+                    "onchanges": [
+                        sshd_config_snippet_file,
+                    ]
+                },
+                {"hide_output": True},
+                {"output_loglevel": "debug"},
+            ]
         }
 
-      if 'cert' in cert_data:
-        section_type = 'file.managed'
-
-        config[section_name] = {
-          section_type: [
-            { 'name':     crt_path                  },
-            { 'user':     'root'                    },
-            { 'group':    'root'                    },
-            { 'mode':     '0640'                    },
-            { 'contents': cert_data['cert']         },
-            { 'onlyif':  renewal_check_cmdline     },
-            { 'require':  [ 'step_client_config', ] },
-          ]
-        }
-
-      if not(force_deploy):
-        config[section_name][section_type].append({'creates':[ crt_path, ]})
-
-      service_reload_deps.append(crt_path)
-
-      if uses_renewer:
-        config[section_name+'_renewer_service'] = {
-          'service.running': [
-            { 'name': service },
-            { 'enable': True  },
-            { 'require': [section_name,] },
-          ]
-        }
-      else:
-        config[section_name+'_renewer_service'] = {
-          'service.dead': [
-            { 'name': service },
-            { 'enable': False  },
-          ]
-        }
-
-    sshd_config_snippet_file = '/etc/ssh/sshd_config.d/enable_host_certs.conf'
-    sshd_reload_cmdline      = '/usr/bin/systemctl is-active sshd > /dev/null && /usr/bin/systemctl reload sshd'
-
-    service_reload_deps.append(sshd_config_snippet_file)
-
-    # TODO: this should be done with our pillar based ssh config
-    config['sshd_config_enable_certs'] = {
-      'file.managed': [
-        { 'name':      sshd_config_snippet_file },
-        { 'user':     'root'                    },
-        { 'group':    'root'                    },
-        { 'mode':     '0644'                    },
-        { 'contents': ssh_hosts_keys_config     },
-      ],
-    }
-    config['sshd_reload'] = {
-      'cmd.run': [
-        { 'name':      sshd_reload_cmdline           },
-        { 'require':   [ sshd_config_snippet_file, ] },
-        { 'onchanges': [ sshd_config_snippet_file, ] },
-        { 'hide_output': True                        },
-        { 'output_loglevel': 'debug'                 },
-      ]
-    }
-
-  return config
+    return config
