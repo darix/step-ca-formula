@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim: ft=yaml
 ---
-local_ca_user: 'saltstack@example.com'
-
 step:
   ca:
     enabled: True
