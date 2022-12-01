@@ -120,7 +120,7 @@ def run():
                 drop_in_paths.append(drop_in_path)
 
                 drop_in_deps = [section_name + "_drop_in_dir"]
-                combine_deps = [crt_path, key_path]
+                combine_deps = []
 
                 if ssl_generate_dhparams:
                     combine_deps.append("generate_dhparams")
@@ -170,7 +170,7 @@ ExecStartPost=
                     )
 
                     drop_in_deps.append(section_name + "_token_cmd")
-
+                    combine_deps.append(section_name + "_token_cmd")
                     config[section_name + "_token_cmd"] = {
                         "cmd.run": [
                             {"name": cmdline},
@@ -199,6 +199,9 @@ ExecStartPost=
 
                     drop_in_deps.append(section_name + "_key")
                     drop_in_deps.append(section_name + "_cert")
+
+                    combine_deps.append(section_name + "_key")
+                    combine_deps.append(section_name + "_cert")
 
                     config[section_name + "_key"] = {
                         "file.managed": [
