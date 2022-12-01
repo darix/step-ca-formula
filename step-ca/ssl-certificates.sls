@@ -314,7 +314,7 @@ ExecStartPost=
                         for service in cert_data["affected_services"]:
                             config[section_name + "_restart_service_{index}".format(index=loop_counter)] = {
                                 "cmd.run": [
-                                    {"name":   "/usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service)},
+                                    {"name":   "/usr/bin/systemctl try-reload-or-restart {service}".format(service=service)},
                                     {"onlyif": "/usr/bin/systemctl is-active {service}".format(service=service)},
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
