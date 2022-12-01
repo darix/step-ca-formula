@@ -37,6 +37,7 @@ def run():
         certificate_mode = "tokens"
         uses_renewer = True
         ssl_generate_dhparams = True
+        ssl_merged_certificates = True
         dhparam_length = 2048
         dhparam_file = "{cert_dir}/dhparams".format(cert_dir=certificate_based_dir)
         dhparam_content = None
@@ -93,6 +94,7 @@ def run():
                 csr_path = "{base_path}.{extension}".format(base_path=base_path, extension="csr")
                 crt_path = "{base_path}.{extension}".format(base_path=base_path, extension="cert.pem")
                 key_path = "{base_path}.{extension}".format(base_path=base_path, extension="key.pem")
+                full_path = "{base_path}.{extension}".format(base_path=base_path, extension="full.pem")
 
                 common_name = __grains__["id"]
 
@@ -110,13 +112,22 @@ def run():
                     "stepca_systemd_daemon_reload",
                 ]
 
+                combine_filenames = [crt_path, key_path]
+
                 drop_in_dir = "/etc/systemd/system/cert-renewer@{cert_name_type}.service.d".format(cert_name_type=cert_name_type)
                 drop_in_path = "{drop_in_dir}/salt.conf".format(drop_in_dir=drop_in_dir)
 
                 drop_in_paths.append(drop_in_path)
 
                 drop_in_deps = [section_name + "_drop_in_dir"]
+                combine_deps = [crt_path, key_path]
 
+                if ssl_generate_dhparams:
+                    combine_deps.append("generate_dhparams")
+                    drop_in_deps.append("generate_dhparams")
+                    combine_filenames.append(dhparam_file)
+
+                combine_cmdline = "/usr/bin/cat {combine_filenames} > {full_path}".format(combine_filenames=" ".join(combine_filenames), full_path=full_path)
                 drop_in_content = """
 [Service]
 # Reset env
@@ -130,6 +141,8 @@ ExecStartPost=
 """.format(
                     certificate_based_dir=certificate_based_dir, step_path=step_path
                 )
+                if ssl_generate_dhparams:
+                    drop_in_content += "ExecStartPost={combine_cmdline}\n".format(combine_cmdline=combine_cmdline)
 
                 if "affected_services" in cert_data:
                     # drop_in_content+="ExecStartPost=systemctl try-reload-or-restart {services_list}\n".format(services_list=' '.join(cert_data['affected_services']))
@@ -231,6 +244,21 @@ ExecStartPost=
                                 ]
                             }
                         )
+
+                if ssl_merged_certificates:
+                    drop_in_deps.append(section_name + "_combined")
+
+                    config[section_name + "_combined"] = {
+                        "cmd.run": [
+                            {"name": combine_cmdline},
+                            {"hide_output": True},
+                            {"output_loglevel": "debug"},
+                            {"require":   combine_deps},
+                            {"onchanges": combine_deps},
+                        ]
+                    }
+                    if not (force_deploy):
+                        config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
                 if uses_renewer:
 
