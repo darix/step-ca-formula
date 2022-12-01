@@ -146,8 +146,8 @@ ExecStartPost=
 
                 if "affected_services" in cert_data:
                     # drop_in_content+="ExecStartPost=systemctl try-reload-or-restart {services_list}\n".format(services_list=' '.join(cert_data['affected_services']))
-                    for service in cert_data["affected_services"]:
-                        drop_in_content += "ExecStartPost=/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {service}\n".format(service=service)
+                    for affected_service in cert_data["affected_services"]:
+                        drop_in_content += "ExecStartPost=/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {affected_service}\n".format(affected_service=affected_service)
 
                 if "exec_start_post" in cert_data:
                     if isinstance(cert_data["exec_start_post"], str):
@@ -311,11 +311,11 @@ ExecStartPost=
                     if "affected_services" in cert_data:
                         loop_counter = 0
 
-                        for service in cert_data["affected_services"]:
+                        for affected_service in cert_data["affected_services"]:
                             config[section_name + "_restart_service_{index}".format(index=loop_counter)] = {
                                 "cmd.run": [
-                                    {"name":   "/usr/bin/systemctl try-reload-or-restart {service}".format(service=service)},
-                                    {"onlyif": "/usr/bin/systemctl is-active {service}".format(service=service)},
+                                    {"name":   "/usr/bin/systemctl try-reload-or-restart {affected_service}".format(affected_service=affected_service)},
+                                    {"onlyif": "/usr/bin/systemctl is-active {affected_service}".format(affected_service=affected_service)},
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
                                 ]
