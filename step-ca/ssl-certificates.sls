@@ -147,7 +147,7 @@ ExecStartPost=
                 if "affected_services" in cert_data:
                     # drop_in_content+="ExecStartPost=systemctl try-reload-or-restart {services_list}\n".format(services_list=' '.join(cert_data['affected_services']))
                     for affected_service in cert_data["affected_services"]:
-                        drop_in_content += "ExecStartPost=/usr/bin/systemctl is-active {service} && /usr/bin/systemctl try-reload-or-restart {affected_service}\n".format(affected_service=affected_service)
+                        drop_in_content += "ExecStartPost=/usr/bin/systemctl is-active {affected_service} && /usr/bin/systemctl try-reload-or-restart {affected_service}\n".format(affected_service=affected_service)
 
                 if "exec_start_post" in cert_data:
                     if isinstance(cert_data["exec_start_post"], str):
