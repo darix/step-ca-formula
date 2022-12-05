@@ -4,3 +4,4 @@
 
 - nothing deploys /etc/salt/step/config/defaults.json
 - error handling for step calls
+- we should have code that verifies that all SAN entries are present in the cert and force the deployment if not
