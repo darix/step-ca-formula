@@ -73,6 +73,11 @@ def run():
                     {"name": dhparam_cmdline},
                     {"hide_output": True},
                     {"output_loglevel": "debug"},
+                    {
+                        "require": [
+                            "step_client_config",
+                        ]
+                    },
                 ]
             }
 
