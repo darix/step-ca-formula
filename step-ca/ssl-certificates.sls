@@ -268,6 +268,20 @@ ExecStartPost=
                     if not (force_deploy):
                         config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
+                    # TODO: this is just an ugly hack until
+                    # if True: #"haproxy" in cert_data["affected_services"]:
+                    if "affected_services" in cert_data:
+                        mapped_services = map(
+                            lambda x: "service:{service}".format(service=x),
+                            cert_data["affected_services"]
+                        )
+                        config[section_name + "_combined"]["cmd.run"].append(
+                            {
+                                "watch_in":   mapped_services,
+                                "require_in": mapped_services,
+                            }
+                        )
+
                 if uses_renewer:
 
                     config[section_name + "_drop_in_dir"] = {
