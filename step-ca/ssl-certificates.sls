@@ -73,6 +73,7 @@ def run():
                     {"name": dhparam_cmdline},
                     {"hide_output": True},
                     {"output_loglevel": "debug"},
+                    {"creates": dhparam_file},
                     {
                         "require": [
                             "step_client_config",
@@ -81,8 +82,8 @@ def run():
                 ]
             }
 
-            if not (force_deploy):
-                config["generate_dhparams"]["cmd.run"].append( {"creates": dhparam_file} )
+            # if not (force_deploy):
+            #    config["generate_dhparams"]["cmd.run"].append( {"creates": dhparam_file} )
 
         for cert_type, scope_cert_pillar in certificates_pillar.items():
 
