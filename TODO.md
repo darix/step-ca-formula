@@ -5,3 +5,4 @@
 - nothing deploys /etc/salt/step/config/defaults.json
 - error handling for step calls
 - we should have code that verifies that all SAN entries are present in the cert and force the deployment if not
+- find out if there is a function to query if a certain state is defined and skip defining our cmd.run states in that case
