@@ -95,6 +95,11 @@ class StepCACLient:
     def options_to_string(self, cert_data):
         if "config" in cert_data:
             config_items = []
+            # TODO: move this to a function
+            #
+            #
+            if "crv" in cert_data["config"] and not("kty" in cert_data["config"]):
+                cert_data["config"]["kty"] = "EC"
             for option_name, value in cert_data["config"].items():
                 config_items.append('--{option_name}="{value}"'.format(option_name=option_name, value=value))
             return " ".join(config_items)
