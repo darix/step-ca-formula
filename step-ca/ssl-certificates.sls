@@ -342,6 +342,7 @@ ExecStartPost=
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
                                     {"require": drop_in_deps},
+                                    {"onchanges": drop_in_deps},
                                 ]
                             }
                             loop_counter += 1
@@ -354,6 +355,7 @@ ExecStartPost=
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
                                     {"require": drop_in_deps},
+                                    {"onchanges": drop_in_deps},
                                 ]
                             }
                         else:
@@ -366,6 +368,7 @@ ExecStartPost=
                                         {"hide_output": True},
                                         {"output_loglevel": "debug"},
                                         {"require": drop_in_deps},
+                                        {"onchanges": drop_in_deps},
                                     ]
                                 }
                                 loop_counter += 1
