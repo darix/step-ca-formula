@@ -125,8 +125,11 @@ def run():
 
                 drop_in_paths.append(drop_in_path)
 
-                drop_in_deps = [section_name + "_drop_in_dir"]
+                drop_in_deps = []
                 combine_deps = []
+
+                if uses_renewer:
+                    drop_in_deps.append(section_name + "_drop_in_dir")
 
                 if ssl_generate_dhparams:
                     combine_deps.append("generate_dhparams")
@@ -338,6 +341,7 @@ ExecStartPost=
                                     {"onlyif": "/usr/bin/systemctl is-active {affected_service}".format(affected_service=affected_service)},
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
+                                    {"require": drop_in_deps},
                                 ]
                             }
                             loop_counter += 1
@@ -349,6 +353,7 @@ ExecStartPost=
                                     {"name": cert_data["exec_start_post"]},
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
+                                    {"require": drop_in_deps},
                                 ]
                             }
                         else:
@@ -360,6 +365,7 @@ ExecStartPost=
                                         {"name": line},
                                         {"hide_output": True},
                                         {"output_loglevel": "debug"},
+                                        {"require": drop_in_deps},
                                     ]
                                 }
                                 loop_counter += 1
