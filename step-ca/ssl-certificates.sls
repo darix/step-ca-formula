@@ -136,7 +136,7 @@ def run():
                     drop_in_deps.append("generate_dhparams")
                     combine_filenames.append(dhparam_file)
 
-                combine_cmdline = "/usr/bin/cat {combine_filenames} > {full_path}".format(combine_filenames=" ".join(combine_filenames), full_path=full_path)
+                combine_cmdline = "/usr/sbin/step-ssl-merge-certs-for-salt {full_path} {combine_filenames}".format(combine_filenames=" ".join(combine_filenames), full_path=full_path)
                 drop_in_content = """
 [Service]
 # Reset env
