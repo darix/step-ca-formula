@@ -260,19 +260,11 @@ ExecStartPost=
                 if ssl_merged_certificates:
                     drop_in_deps.append(section_name + "_combined")
 
-                    combined_content = []
-
-                    for filename in combine_filenames:
-                        with open(filename) as f:
-                            combined_content.append(f.read())
-
                     config[section_name + "_combined"] = {
-                        "file.managed": [
-                            {"name": full_path},
-                            {"user": "root"},
-                            {"group": "root"},
-                            {"mode": "0640"},
-                            {"contents": "\n".join(combined_content)},
+                        "cmd.run": [
+                            {"name": combine_cmdline},
+                            {"hide_output": True},
+                            {"output_loglevel": "debug"},
                             {"require":   combine_deps},
                             {"onchanges": combine_deps},
                         ]
