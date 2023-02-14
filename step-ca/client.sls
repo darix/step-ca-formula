@@ -33,7 +33,7 @@ def run():
     config = {
         "step_client_package": {
             "pkg.installed": [
-                {"names": [ "step-cli", "step-cli-salt", "openssl", ]},
+                {"pkgs": [ "step-cli", {"step-cli-salt":">= 0.25.0"}, "openssl", ]},
             ]
         },
         "step_client_config": {
