@@ -150,7 +150,7 @@ ExecStartPost=
 """.format(
                     certificate_based_dir=certificate_based_dir, step_path=step_path
                 )
-                if ssl_generate_dhparams:
+                if ssl_merged_certificates:
                     drop_in_content += "ExecStartPost={combine_cmdline}\n".format(combine_cmdline=combine_cmdline)
 
                 if "exec_start_post" in cert_data:
