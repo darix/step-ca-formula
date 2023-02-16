@@ -272,6 +272,24 @@ ExecStartPost=
                     if not (force_deploy):
                         config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
+
+                    if "acls_for_combined_file" in cert_data:
+                        acl_index = 0
+                        for acl_setting in cert_data["acls_for_combined_file"]:
+                            for acl_name in acl_setting["acl_names"]:
+                                acl_section = f"{section_name}_acl_{acl_index}"
+                                config[acl_section] = {
+                                    "acl.present": [
+                                        {"name":      full_path},
+                                        {"acl_type":  acl_setting["acl_type"]},
+                                        {"acl_name":  acl_name},
+                                        {"perms":     acl_setting["perms"]},
+                                        {"require":   drop_in_deps},
+                                        {"onchanges": drop_in_deps},
+                                    ]
+                                }
+                                acl_index += 1
+
                     # TODO: this is just an ugly hack until
                     # if True: #"haproxy" in cert_data["affected_services"]:
                     if "affected_services" in cert_data:
