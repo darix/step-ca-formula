@@ -81,6 +81,16 @@ step:
         config:
           kty: RSA
           size: 4096
+        acls_for_combined_file:
+          - acl_type: user
+            acl_names:
+            - postgres
+            - minio
+            perms: rx
+          - acl_type: group
+            acl_names:
+            - ldap
+            perms: rx
     user:
       postgres:
         cn: postgres
