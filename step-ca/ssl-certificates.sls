@@ -153,6 +153,14 @@ ExecStartPost=
                 if ssl_merged_certificates:
                     drop_in_content += "ExecStartPost={combine_cmdline}\n".format(combine_cmdline=combine_cmdline)
 
+                    if "acls_for_combined_file" in cert_data:
+                        for acl_setting in cert_data["acls_for_combined_file"]:
+                            acl_type_prefix = acl_setting["acl_type"][0]
+                            acl_perms       = acl_setting["perms"]
+
+                            for acl_name in acl_setting["acl_names"]:
+                                drop_in_content += f"ExecStartPost=/usr/bin/setfacl -m {acl_type_prefix}:{acl_name}:{acl_perms} {full_path}\n"
+
                 if "exec_start_post" in cert_data:
                     if isinstance(cert_data["exec_start_post"], str):
                         drop_in_content += "ExecStartPost={line}\n".format(line=cert_data["exec_start_post"])
