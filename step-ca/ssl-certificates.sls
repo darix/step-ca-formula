@@ -156,7 +156,10 @@ ExecStartPost=
                     if "acls_for_combined_file" in cert_data:
                         for acl_setting in cert_data["acls_for_combined_file"]:
                             acl_type_prefix = acl_setting["acl_type"][0]
-                            acl_perms       = acl_setting["perms"]
+
+                            acl_perms = "r"
+                            if "perms" in acl_setting:
+                                acl_perms = acl_setting["perms"]
 
                             for acl_name in acl_setting["acl_names"]:
                                 drop_in_content += f"ExecStartPost=/usr/bin/setfacl -m {acl_type_prefix}:{acl_name}:{acl_perms} {full_path}\n"
@@ -284,6 +287,10 @@ ExecStartPost=
                     if "acls_for_combined_file" in cert_data:
                         acl_index = 0
                         for acl_setting in cert_data["acls_for_combined_file"]:
+                            acl_perms = "r"
+                            if "perms" in acl_setting:
+                                acl_perms = acl_setting["perms"]
+
                             for acl_name in acl_setting["acl_names"]:
                                 acl_section = f"{section_name}_acl_{acl_index}"
                                 config[acl_section] = {
@@ -291,7 +298,7 @@ ExecStartPost=
                                         {"name":      full_path},
                                         {"acl_type":  acl_setting["acl_type"]},
                                         {"acl_name":  acl_name},
-                                        {"perms":     acl_setting["perms"]},
+                                        {"perms":     acl_perms},
                                         {"require":   drop_in_deps},
                                         {"onchanges": drop_in_deps},
                                     ]

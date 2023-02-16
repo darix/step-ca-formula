@@ -86,11 +86,9 @@ step:
             acl_names:
             - postgres
             - minio
-            perms: rx
           - acl_type: group
             acl_names:
             - ldap
-            perms: rx
     user:
       postgres:
         cn: postgres
