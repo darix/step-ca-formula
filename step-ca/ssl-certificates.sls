@@ -330,6 +330,18 @@ ExecStartPost=
                         ]
                     }
 
+                    config[section_name + "_drop_in"] = {
+                        "file.absent": [
+                            {"name": drop_in_path},
+                        ],
+                    }
+
+                    config[section_name + "_drop_in_dir"] = {
+                        "file.absent": [
+                            {"name": drop_in_dir},
+                        ],
+                    }
+
                     if "exec_start_post" in cert_data:
                         if isinstance(cert_data["exec_start_post"], str):
                             config[section_name + "_exec_start_post"] = {
