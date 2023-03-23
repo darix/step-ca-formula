@@ -1,4 +1,4 @@
-name: TEMPLATE
+name: step-ca-formula
 os: Suse, openSUSE
 os_family: Suse
 version: 0.0.1
