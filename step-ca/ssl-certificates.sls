@@ -174,7 +174,7 @@ ExecStartPost=
                 if "affected_services" in cert_data:
                     # drop_in_content+="ExecStartPost=systemctl try-reload-or-restart {services_list}\n".format(services_list=' '.join(cert_data['affected_services']))
                     for affected_service in cert_data["affected_services"]:
-                        drop_in_content += "ExecStartPost=/usr/bin/systemctl is-active {affected_service} && /usr/bin/systemctl try-reload-or-restart {affected_service}\n".format(affected_service=affected_service)
+                        drop_in_content += "ExecStartPost=bash -c '/usr/bin/systemctl is-active {affected_service} && /usr/bin/systemctl try-reload-or-restart {affected_service}'\n".format(affected_service=affected_service)
 
                 config[section_name] = {}
                 renewal_check_cmdline = "/usr/sbin/step-ssl-cert-needs-renewal-for-salt {crt_path}".format(crt_path=crt_path)
