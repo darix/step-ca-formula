@@ -195,7 +195,6 @@ ExecStartPost=
                         "cmd.run": [
                             {"name": cmdline},
                             {"env": cmdline_env},
-                            {"onlyif": renewal_check_cmdline},
                             {"hide_output": True},
                             {"output_loglevel": "debug"},
                             {
@@ -206,6 +205,9 @@ ExecStartPost=
                         ]
                     }
                     if not (force_deploy):
+                        config[section_name + "_token_cmd"]["cmd.run"].append(
+                            {"onlyif": renewal_check_cmdline}
+                        )
                         config[section_name + "_token_cmd"]["cmd.run"].append(
                             {
                                 "creates": [
@@ -229,7 +231,6 @@ ExecStartPost=
                             {"user": "root"},
                             {"group": "root"},
                             {"mode": "0640"},
-                            {"onlyif": renewal_check_cmdline},
                             {"contents": cert_data["key"]},
                             {"require": ["step_client_config"]},
                         ]
@@ -241,7 +242,6 @@ ExecStartPost=
                             {"user": "root"},
                             {"group": "root"},
                             {"mode": "0640"},
-                            {"onlyif": renewal_check_cmdline},
                             {"contents": cert_data["cert"]},
                             {
                                 "require": [
@@ -252,12 +252,19 @@ ExecStartPost=
                     }
                     if not (force_deploy):
                         config[section_name + "_key"]["file.managed"].append(
+                            {"onlyif": renewal_check_cmdline}
+                        )
+                        config[section_name + "_key"]["file.managed"].append(
                             {
                                 "creates": [
                                     crt_path,
                                     key_path,
                                 ]
                             }
+                        )
+
+                        config[section_name + "_cert"]["file.managed"].append(
+                            {"onlyif": renewal_check_cmdline}
                         )
                         config[section_name + "_cert"]["file.managed"].append(
                             {
