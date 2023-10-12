@@ -22,6 +22,8 @@ import os.path
 import os
 import tempfile
 
+from salt.exceptions import SaltConfigurationError, SaltRenderError
+
 log = logging.getLogger(__name__)
 
 
@@ -129,10 +131,15 @@ class StepCACLient:
             options=cmd_line_options,
         )
 
-        return cmdrun(
+        token = cmdrun(
             cmd=cmd_line,
             env=self.cmd_env,
         )
+
+        if token and token != "":
+            return token
+        else:
+            raise SaltRenderError(f"Failed to get token from {self.provisioner} for {common_name}")
 
     def read_and_cleanup(self, filename):
         return_data = None
