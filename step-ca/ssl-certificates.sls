@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
+from salt.exceptions import SaltConfigurationError
 
 # TODO: get the cert dir from the pillar
 step_path = "/etc/step"
@@ -181,6 +182,10 @@ ExecStartPost=
 
                 if "tokens" == certificate_mode:
                     # we do not need to specify the --san entries here as they are encoded in the token.
+                    token = cert_data["token"]
+                    if token == "":
+                        raise SaltConfigurationError(f"Can not create cert for {common_name} with empty token")
+
                     cmdline = '/usr/bin/step ca certificate --force --token="{token}" {options} "{commonname}" "{crt_path}" "{key_path}"'.format(
                         commonname=common_name,
                         token=cert_data["token"],
