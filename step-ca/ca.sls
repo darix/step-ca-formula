@@ -71,6 +71,8 @@ step_ca_service:
     - requires:
       - step_ca_init
 
+  {%- set local_ca_user = pillar.get("local_ca_user", None) %}
+
   {%- set active_provisioners = [] %}
   {%- if 'provisioners' in ca_pillar %}
     {%- for provisioner_name, provisioner_data in ca_pillar.provisioners.items() %}
@@ -128,10 +130,71 @@ step_ca_provisioner_{{ provisioner_name }}_settings:
     - needle: {{ provisioner_name }}
     - config: {{ provisioner_data.settings | json }}
       {%- endif %}
+
+      {%- if local_ca_user and local_ca_user == provisioner_name %}
+salt_step_directory:
+  file.directory:
+    - name: /etc/salt/step
+    - user: root
+    - group: salt
+    - mode: "0750"
+    - require:
+      - step_ca_init
+
+salt_step_config_directory:
+  file.directory:
+    - name: /etc/salt/step/config
+    - user: root
+    - group: salt
+    - mode: "0750"
+    - require:
+      - salt_step_directory
+
+{%-   set ca_defaults = salt.cp.get_file_str('/var/lib/step-ca/.step/config/defaults.json') | load_json %}
+
+{%-   set salt_root_cert = "/etc/salt/step/config/root.crt" %}
+
+salt_step_copy_root_crt:
+  file.managed:
+    - name:     {{ salt_root_cert }}
+    - user:     root
+    - group:    salt
+    - mode:     "0640"
+    - require:
+      - salt_step_config_directory
+    - source: '/var/lib/step-ca/.step/certs/root_ca.crt'
+
+salt_step_client_config:
+  file.managed:
+    - user:     root
+    - group:    salt
+    - mode:     "0640"
+    - template: jinja
+    - requires:
+      - salt_step_copy_root_crt
+    - name:     "/etc/salt/step/config/defaults.json"
+    - source:   "salt://step-ca/files/etc/step/config/defaults.json.j2"
+    - context:
+      "config":
+        "ca-url":       {{ ca_defaults["ca-url"] }}
+        "fingerprint":  {{ ca_defaults["fingerprint"] }}
+        "root":         {{ salt_root_cert }}
+
+salt_step_client_password:
+  file.managed:
+    - user:     root
+    - group:    salt
+    - mode:     "0640"
+    - name:     /etc/salt/step/config/password
+    - contents: {{ provisioner_data.options.password }}
+    - require:
+      - salt_step_client_config
+      {%- endif %}
     {%- endfor %}
 
 step_ca_reload:
   cmd.run:
     - name: /usr/bin/systemctl reload step-ca.service
+    - onlyif: /usr/bin/systemctl is-active step-ca.service
   {%- endif %}
 {%- endif %}
