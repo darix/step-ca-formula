@@ -36,18 +36,32 @@ def patch_provisioner_config(needle, config):
             continue
 
         for option, value in config.items():
-            log.error(f"Setting {option} for {value}")
-            if provisioner[option] != value:
+            log.error(f"Checking {option} for {value}")
+            if not(option in provisioner) or provisioner[option] != value:
+                log.error(f"Setting {option} to {value}")
                 changed_settings.append(option)
                 provisioner[option] = value
 
-        # dump to a string first to avoid leaving us with a truncated file when dump fails
-        json_string = json.dumps(parsed_config, indent=4)
-        open_file.seek(0)
-        open_file.truncate()
-        open_file.write(json_string)
 
     if len(changed_settings) > 0:
-        return {"Applied settings": changed_settings}
+        # dump to a string first to avoid leaving us with a truncated file when dump fails
+        json_string = json.dumps(parsed_config, indent=4)
+        if json_string:
+            with open(pathname, "w+") as open_file:
+                open_file.write(json_string)
+            return {"Applied settings": changed_settings}
+        else:
+            log.error("Dumping config failed")
 
     return None
+
+# if __name__ == "__main__":
+#     needle = "saltstack@example.com"
+#     config = {
+#         "forceCN": True,
+#         "claims": {
+#             "maxTLSCertDuration": "2160h0m0s",
+#             "defaultTLSCertDuration": "2160h0m0s",
+#         }
+#     }
+#     patch_provisioner_config(needle, config)
