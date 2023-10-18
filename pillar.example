@@ -23,12 +23,11 @@ step:
           type: JWK
           password: foobar
           ssh: true
-# TODO:
-#       settings:
-#         "forceCN": true
-#         "claims":
-#           "maxTLSCertDuration": "2160h0m0s"
-#           "defaultTLSCertDuration": "2160h0m0s"
+        settings:
+          "forceCN": true
+          "claims":
+            "maxTLSCertDuration": "2160h0m0s"
+            "defaultTLSCertDuration": "2160h0m0s"
   defaults:
     token:
       lifetime: 60m
