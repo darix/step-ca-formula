@@ -74,7 +74,7 @@ step:
       pg-ecdsa:
         cn: {{ grains.id }}
         exec_start_post:
-          - '/usr/bin/systemctl is-active postgresql.service && /usr/bin/systemctl try-reload-or-restart postgresql.service'
+          - bash -c '/usr/bin/systemctl is-active postgresql.service && /usr/bin/systemctl try-reload-or-restart postgresql.service'
       pg-rsa:
         cn: {{ grains.id }}
         config:
