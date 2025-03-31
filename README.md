@@ -37,17 +37,38 @@ local_ca_user: saltstack@example.com
 file_roots:
   base:
     - {{ salt_base_dir }}/salt
-    - {{ formulas_base_dir }}/step-ca-formula
+    - {{ formulas_base_dir }}/step-ca-formula/salt/
+
+pillar_roots:
+  base:
+    - {{ salt_base_dir }}/pillar/
+    - {{ formulas_base_dir }}/step-ca-formula/pillar/
 
 # load the external pillar module
 module_dirs:
-  - {{ formulas_base_dir }}/step-ca-formula/modules
+  - {{ formulas_base_dir }}/step-ca-formula/modules/
 
 # This will fill in extra values like tokens/certs into the pillar
 # make the step_ca pillar the last entry.
 ext_pillar:
   - step_ca: {}
 ```
+
+## Certificate mode
+
+One way to deploy certificates is in certificate mode. Then the final certs will be injected into the pillar and then rolled out via the salt formula
+
+```
+nodegroups:
+  step_ca_cert_mode_force_deploy_nodes: "I@step:client_config:certificate_mode:certificates and I@step:client_config:force_deploy:True"
+
+That allows you to add a systemd timer/service around:
+
+```
+salt -N step_ca_cert_mode_force_deploy_nodes state.apply step-ca
+```
+
+That will deploy certificates and also do all the associated scriptlets.
 
 ## License
 
