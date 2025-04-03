@@ -25,6 +25,17 @@ step_path = "/etc/step"
 certificate_based_dir = "{step_path}/certs".format(step_path=step_path)
 cmdline_env = {"STEPPATH": step_path}
 
+def map_affected_services(affected_services):
+    ret = []
+    for service in affected_services:
+        ret.append(f"service:{service}")
+    return ret
+
+def hookup_service_dependency(config, state_name, state_type, deps):
+    if len(deps) > 0:
+        config[state_name][state_type].append({"watch_in":     deps})
+        config[state_name][state_type].append({"require_in":   deps})
+        config[state_name][state_type].append({"onchanges_in": deps})
 
 def run():
     config = {}
@@ -114,6 +125,7 @@ def run():
 
                 drop_in_deps = []
                 combine_deps = []
+                require_in_affected_services = []
 
                 if uses_renewer:
                     drop_in_deps.append(section_name + "_drop_in_dir")
@@ -160,6 +172,7 @@ ExecStartPost=
 
                 if "affected_services" in cert_data:
                     # drop_in_content+="ExecStartPost=systemctl try-reload-or-restart {services_list}\n".format(services_list=' '.join(cert_data['affected_services']))
+                    require_in_affected_services = map_affected_services(cert_data["affected_services"])
                     for affected_service in cert_data["affected_services"]:
                         drop_in_content += "ExecStartPost=bash -c '/usr/bin/systemctl is-active {affected_service} && /usr/bin/systemctl try-reload-or-restart {affected_service}'\n".format(affected_service=affected_service)
 
@@ -281,6 +294,7 @@ ExecStartPost=
                     if not (force_deploy):
                         config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
+                    hookup_service_dependency(config, section_name + "_combined", "cmd.run", require_in_affected_services)
 
                     if "acls_for_combined_file" in cert_data:
                         acl_index = 0
@@ -301,22 +315,10 @@ ExecStartPost=
                                         {"onchanges": drop_in_deps},
                                     ]
                                 }
-                                acl_index += 1
 
-                    # TODO: this is just an ugly hack until
-                    # if True: #"haproxy" in cert_data["affected_services"]:
-                    if "affected_services" in cert_data:
-                        mapped_services = map(
-                            lambda x: "service: {service}".format(service=x),
-                            cert_data["affected_services"]
-                        )
-                        config[section_name + "_combined"]["cmd.run"].append(
-                            {
-                                "watch_in":   mapped_services,
-                                "require_in": mapped_services,
-                                "onchanges_in":   mapped_services,
-                            }
-                        )
+                                hookup_service_dependency(config, acl_section, "acl.present", require_in_affected_services)
+
+                                acl_index += 1
 
                 if uses_renewer:
 
@@ -376,7 +378,8 @@ ExecStartPost=
 
                 if "exec_start_post" in cert_data:
                     if isinstance(cert_data["exec_start_post"], str):
-                        config[section_name + "_exec_start_post"] = {
+                        full_section_name = section_name + "_exec_start_post"
+                        config[full_section_name] = {
                             "cmd.run": [
                                 {"name": cert_data["exec_start_post"]},
                                 {"hide_output": True},
@@ -385,11 +388,15 @@ ExecStartPost=
                                 {"onchanges": drop_in_deps},
                             ]
                         }
-                    else:
-                        for line in cert_data["exec_start_post"]:
-                            loop_counter = 0
 
-                            config[section_name + "_exec_start_post_{index}".format(index=loop_counter)] = {
+                        hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+
+                    else:
+                        loop_counter = 0
+                        for line in cert_data["exec_start_post"]:
+                            full_section_name = section_name + "_exec_start_post_{index}".format(index=loop_counter)
+
+                            config[full_section_name] = {
                                 "cmd.run": [
                                     {"name": line},
                                     {"hide_output": True},
@@ -398,6 +405,9 @@ ExecStartPost=
                                     {"onchanges": drop_in_deps},
                                 ]
                             }
+
+                            hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+
                             loop_counter += 1
 
                 # TODO: we could also use the require_in or so here to trigger services configured via salt
@@ -405,7 +415,8 @@ ExecStartPost=
                     loop_counter = 0
 
                     for affected_service in cert_data["affected_services"]:
-                        config[section_name + "_restart_service_{index}".format(index=loop_counter)] = {
+                        full_section_name = section_name + "_restart_service_{index}".format(index=loop_counter)
+                        config[full_section_name] = {
                             "cmd.run": [
                                 {"name":   "/usr/bin/systemctl try-reload-or-restart {affected_service}".format(affected_service=affected_service)},
                                 {"onlyif": "/usr/bin/systemctl is-active {affected_service}".format(affected_service=affected_service)},
@@ -415,6 +426,9 @@ ExecStartPost=
                                 {"onchanges": drop_in_deps},
                             ]
                         }
+
+                        hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+
                         loop_counter += 1
 
     return config
