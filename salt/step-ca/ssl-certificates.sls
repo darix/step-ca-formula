@@ -37,33 +37,17 @@ def run():
 
         certificates_pillar = __pillar__["step"]["certificates"]
 
-        certificate_mode = "tokens"
-        uses_renewer = True
-        ssl_generate_dhparams = True
-        ssl_merged_certificates = True
-        dhparam_length = 2048
+        certificate_mode        = client_config_pillar.get("certificate_mode", "tokens")
+        uses_renewer            = client_config_pillar.get("certificate_use_renewer", True)
+        ssl_generate_dhparams   = client_config_pillar.get("ssl_generate_dhparams", True)
+        ssl_merged_certificates = client_config_pillar.get("ssl_merged_certificates", True)
+        force_deploy            = client_config_pillar.get("force_deploy", False)
+        dhparam_length          = client_config_pillar.get("dhparam_length", 2048)
+
         dhparam_file = "{cert_dir}/dhparams".format(cert_dir=certificate_based_dir)
         dhparam_content = None
 
         drop_in_paths = []
-
-        if "certificate_mode" in client_config_pillar:
-            certificate_mode = client_config_pillar["certificate_mode"]
-
-        if "force_deploy" in client_config_pillar:
-            force_deploy = client_config_pillar["force_deploy"]
-
-        if "certificate_use_renewer" in client_config_pillar:
-            uses_renewer = client_config_pillar["certificate_use_renewer"]
-
-        if "ssl_generate_dhparams" in client_config_pillar:
-            ssl_generate_dhparams = client_config_pillar["ssl_generate_dhparams"]
-
-        if "ssl_merged_certificates" in client_config_pillar:
-            ssl_merged_certificates = client_config_pillar["ssl_merged_certificates"]
-
-        if "dhparam_length" in client_config_pillar:
-            dhparam_length = client_config_pillar["dhparam_length"]
 
         if ssl_generate_dhparams:
             dhparam_cmdline = "/usr/bin/openssl dhparam -out {dhparam_file} {dhparam_length}".format(
