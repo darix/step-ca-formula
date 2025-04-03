@@ -33,20 +33,11 @@ def run():
 
     client_config_pillar = step_pillar["client_config"]
 
-    certificate_mode = "tokens"
-    uses_renewer = True
-    force_deploy = False
+    certificate_mode = client_config_pillar.get("certificate_mode", "tokens")
+    uses_renewer     = client_config_pillar.get("certificate_use_renewer", True)
+    force_deploy     = client_config_pillar.get("force_deploy", False)
 
     service_reload_deps = []
-
-    if "certificate_mode" in client_config_pillar:
-        certificate_mode = client_config_pillar["certificate_mode"]
-
-    if "force_deploy" in client_config_pillar:
-        force_deploy = client_config_pillar["force_deploy"]
-
-    if "certificate_use_renewer" in client_config_pillar:
-        uses_renewer = client_config_pillar["certificate_use_renewer"]
 
     if "ssh" in step_pillar and "sign_hosts_certs" in step_pillar["ssh"] and step_pillar["ssh"]["sign_hosts_certs"]:
         ssh_pillar = step_pillar["ssh"]["certs"]
