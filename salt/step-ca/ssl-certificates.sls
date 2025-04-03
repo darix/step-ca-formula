@@ -390,41 +390,24 @@ ExecStartPost=
                         ],
                     }
 
-                    if "exec_start_post" in cert_data:
-                        if isinstance(cert_data["exec_start_post"], str):
-                            config[section_name + "_exec_start_post"] = {
+                if "exec_start_post" in cert_data:
+                    if isinstance(cert_data["exec_start_post"], str):
+                        config[section_name + "_exec_start_post"] = {
+                            "cmd.run": [
+                                {"name": cert_data["exec_start_post"]},
+                                {"hide_output": True},
+                                {"output_loglevel": "debug"},
+                                {"require": drop_in_deps},
+                                {"onchanges": drop_in_deps},
+                            ]
+                        }
+                    else:
+                        for line in cert_data["exec_start_post"]:
+                            loop_counter = 0
+
+                            config[section_name + "_exec_start_post_{index}".format(index=loop_counter)] = {
                                 "cmd.run": [
-                                    {"name": cert_data["exec_start_post"]},
-                                    {"hide_output": True},
-                                    {"output_loglevel": "debug"},
-                                    {"require": drop_in_deps},
-                                    {"onchanges": drop_in_deps},
-                                ]
-                            }
-                        else:
-                            for line in cert_data["exec_start_post"]:
-                                loop_counter = 0
-
-                                config[section_name + "_exec_start_post_{index}".format(index=loop_counter)] = {
-                                    "cmd.run": [
-                                        {"name": line},
-                                        {"hide_output": True},
-                                        {"output_loglevel": "debug"},
-                                        {"require": drop_in_deps},
-                                        {"onchanges": drop_in_deps},
-                                    ]
-                                }
-                                loop_counter += 1
-
-                    # TODO: we could also use the require_in or so here to trigger services configured via salt
-                    if "affected_services" in cert_data:
-                        loop_counter = 0
-
-                        for affected_service in cert_data["affected_services"]:
-                            config[section_name + "_restart_service_{index}".format(index=loop_counter)] = {
-                                "cmd.run": [
-                                    {"name":   "/usr/bin/systemctl try-reload-or-restart {affected_service}".format(affected_service=affected_service)},
-                                    {"onlyif": "/usr/bin/systemctl is-active {affected_service}".format(affected_service=affected_service)},
+                                    {"name": line},
                                     {"hide_output": True},
                                     {"output_loglevel": "debug"},
                                     {"require": drop_in_deps},
@@ -432,5 +415,22 @@ ExecStartPost=
                                 ]
                             }
                             loop_counter += 1
+
+                # TODO: we could also use the require_in or so here to trigger services configured via salt
+                if "affected_services" in cert_data:
+                    loop_counter = 0
+
+                    for affected_service in cert_data["affected_services"]:
+                        config[section_name + "_restart_service_{index}".format(index=loop_counter)] = {
+                            "cmd.run": [
+                                {"name":   "/usr/bin/systemctl try-reload-or-restart {affected_service}".format(affected_service=affected_service)},
+                                {"onlyif": "/usr/bin/systemctl is-active {affected_service}".format(affected_service=affected_service)},
+                                {"hide_output": True},
+                                {"output_loglevel": "debug"},
+                                {"require": drop_in_deps},
+                                {"onchanges": drop_in_deps},
+                            ]
+                        }
+                        loop_counter += 1
 
     return config
