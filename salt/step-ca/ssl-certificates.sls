@@ -31,11 +31,13 @@ def map_affected_services(affected_services):
         ret.append(f"service:{service}")
     return ret
 
-def hookup_service_dependency(config, state_name, state_type, deps):
+
+def hookup_dependencies_into_service(config, state_name, state_type, deps):
     if len(deps) > 0:
         config[state_name][state_type].append({"watch_in":     deps})
         config[state_name][state_type].append({"require_in":   deps})
         config[state_name][state_type].append({"onchanges_in": deps})
+
 
 def run():
     config = {}
@@ -294,7 +296,7 @@ ExecStartPost=
                     if not (force_deploy):
                         config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
-                    hookup_service_dependency(config, section_name + "_combined", "cmd.run", require_in_affected_services)
+                    hookup_dependencies_into_service(config, section_name + "_combined", "cmd.run", require_in_affected_services)
 
                     if "acls_for_combined_file" in cert_data:
                         acl_index = 0
@@ -316,7 +318,7 @@ ExecStartPost=
                                     ]
                                 }
 
-                                hookup_service_dependency(config, acl_section, "acl.present", require_in_affected_services)
+                                hookup_dependencies_into_service(config, acl_section, "acl.present", require_in_affected_services)
 
                                 acl_index += 1
 
@@ -389,7 +391,7 @@ ExecStartPost=
                             ]
                         }
 
-                        hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+                        hookup_dependencies_into_service(config, full_section_name, "cmd.run", require_in_affected_services)
 
                     else:
                         loop_counter = 0
@@ -406,7 +408,7 @@ ExecStartPost=
                                 ]
                             }
 
-                            hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+                            hookup_dependencies_into_service(config, full_section_name, "cmd.run", require_in_affected_services)
 
                             loop_counter += 1
 
@@ -427,7 +429,7 @@ ExecStartPost=
                             ]
                         }
 
-                        hookup_service_dependency(config, full_section_name, "cmd.run", require_in_affected_services)
+                        hookup_dependencies_into_service(config, full_section_name, "cmd.run", require_in_affected_services)
 
                         loop_counter += 1
 
