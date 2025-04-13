@@ -39,7 +39,7 @@ def run():
 
     service_reload_deps = []
 
-    if "ssh" in step_pillar and "sign_hosts_certs" in step_pillar["ssh"] and step_pillar["ssh"]["sign_hosts_certs"]:
+    if "ssh" in step_pillar and "sign_hosts_certs" in step_pillar["ssh"] and step_pillar["ssh"]["sign_hosts_certs"] and "certs" in step_pillar["ssh"]:
         ssh_pillar = step_pillar["ssh"]["certs"]
 
         ssh_hosts_keys_config = ""
