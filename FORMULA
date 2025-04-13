@@ -1,7 +1,7 @@
 name: step-ca-formula
 os: Suse, openSUSE
 os_family: Suse
-version: 0.0.14
+version: 0.0.15
 release: 1
 minimum_version: 3004
 summary: Smallstep CA Formular
