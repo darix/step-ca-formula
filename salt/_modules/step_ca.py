@@ -36,8 +36,31 @@
 
 import logging
 import json
+import os.path
 
 log = logging.getLogger(__name__)
+
+def _read_cert_file(cert_path):
+    if os.path.isfile(cert_path):
+        with open(cert_path) as f:
+            return f.read()
+    else:
+        return ""
+
+
+def get_ssl_root_certificate():
+    root_cert_path = "/var/lib/step-ca/.step/certs/root_ca.crt"
+    return _read_cert_file(root_cert_path)
+
+
+def get_ssh_host_pubkey():
+    root_cert_path = "/var/lib/step-ca/.step/certs/ssh_host_ca_key.pub"
+    return _read_cert_file(root_cert_path)
+
+
+def get_ssh_user_pubkey():
+    root_cert_path = "var/lib/step-ca/.step/certs/ssh_user_ca_key.pub"
+    return _read_cert_file(root_cert_path)
 
 
 def patch_provisioner_config(needle, config):
