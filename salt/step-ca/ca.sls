@@ -85,6 +85,10 @@ step_ca_init:
       - /var/lib/step-ca/.step/config/defaults.json
       - /var/lib/step-ca/.step/certs/intermediate_ca.crt
       - /var/lib/step-ca/.step/certs/root_ca.crt
+      {%- if ca_pillar.get("ssh", True) %}
+      - /var/lib/step-ca/.step/certs/ssh_host_ca_key.pub
+      - /var/lib/step-ca/.step/certs/ssh_user_ca_key.pub
+      {%- endif %}
 
 step_ca_service:
   service.running:
