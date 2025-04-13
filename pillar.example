@@ -20,6 +20,9 @@
 # -*- coding: utf-8 -*-
 # vim: ft=yaml
 ---
+include:
+  - includes.step-ca-mine-functions
+
 step:
   ca:
     enabled: True

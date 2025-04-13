@@ -53,12 +53,12 @@ def get_ssl_root_certificate():
     return _read_cert_file(root_cert_path)
 
 
-def get_ssh_host_pubkey():
+def get_ssh_host_ca_pubkey():
     root_cert_path = "/var/lib/step-ca/.step/certs/ssh_host_ca_key.pub"
     return _read_cert_file(root_cert_path)
 
 
-def get_ssh_user_pubkey():
+def get_ssh_user_ca_pubkey():
     root_cert_path = "var/lib/step-ca/.step/certs/ssh_user_ca_key.pub"
     return _read_cert_file(root_cert_path)
 
