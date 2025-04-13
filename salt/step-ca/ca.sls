@@ -60,6 +60,9 @@ step_ca_password_file:
   {%- do cmdline_elements.append('--with-ca-url="{ca_url}"'.format(ca_url=ca_pillar.get("ca_url", "https://" ~ grains.id ))) %}
   {%- do cmdline_elements.append('--provisioner="{provisioner}"'.format(provisioner=ca_pillar.initial_provisioner)) %}
   {%- do cmdline_elements.append('--name="{name}"'.format(name=ca_pillar.name)) %}
+  {%- if ca_pillar.get("ssh", True) %}
+    {%- do cmdline_elements.append('--ssh') %}
+  {%- endif %}
 
   {%- if 'dns' in ca_pillar %}
     {%- for dns_name in ca_pillar.dns %}

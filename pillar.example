@@ -28,6 +28,7 @@ step:
     dns:
       - ca.example.com
     initial_provisioner: ca@example.com
+    ssh: True
     provisioners:
       acme:
         options:
@@ -47,6 +48,7 @@ step:
           "claims":
             "maxTLSCertDuration": "2160h0m0s"
             "defaultTLSCertDuration": "2160h0m0s"
+            "enableSSHCA": True
   defaults:
     token:
       lifetime: 60m
