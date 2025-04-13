@@ -90,6 +90,8 @@ step_ca_service:
   service.running:
     - name: step-ca.service
     - reload: True
+    - prereq:
+      - step_ca_init
     - requires:
       - step_ca_init
 
@@ -151,6 +153,10 @@ step_ca_provisioner_{{ provisioner_name }}_settings:
     - name: step_ca.patch_provisioner_config
     - needle: {{ provisioner_name }}
     - config: {{ provisioner_data.settings | json }}
+    - prereq:
+      - {{ section_name }}
+    - require:
+      - {{ section_name }}
       {%- endif %}
 
       {%- if local_ca_user and local_ca_user == provisioner_name %}
