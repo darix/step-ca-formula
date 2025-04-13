@@ -158,7 +158,9 @@ class StepCACLient:
         if token and token != "":
             return token
         else:
-            raise SaltRenderError(f"Failed to get token from {self.provisioner} for {common_name}")
+            # raise SaltRenderError(f"Failed to get token from {self.provisioner} for {common_name}")
+            log.error(f"Failed to get token from {self.provisioner} for {common_name}")
+            return None
 
     def read_and_cleanup(self, filename):
         return_data = None
@@ -242,17 +244,17 @@ class StepCACLient:
             for key_type, key in pubkey_grains.items():
                 # TODO: throw error if key_type is not in ssh_key_types list
                 token = self.run_token_command(self.minion_id, cmd_line_options)
-
-                if "certificates" == self.mode:
-                    cert = self.run_ssh_cert_command(token, key, self.minion_id, principal_options)
-                    if cert:
+                if not(token is None):
+                    if "certificates" == self.mode:
+                        cert = self.run_ssh_cert_command(token, key, self.minion_id, principal_options)
+                        if cert:
+                            self.step_pillar["step"]["ssh"]["certs"][key_type] = {
+                                "cert": cert,
+                            }
+                    elif "tokens" == self.mode:
                         self.step_pillar["step"]["ssh"]["certs"][key_type] = {
-                            "cert": cert,
+                            "token": token,
                         }
-                elif "tokens" == self.mode:
-                    self.step_pillar["step"]["ssh"]["certs"][key_type] = {
-                        "token": token,
-                    }
 
     def do_ssl_certificates(self):
         if "step" in self.pillar and "certificates" in self.pillar["step"]:
@@ -292,36 +294,36 @@ class StepCACLient:
                         cmd_line_options = san_entries
 
                         token = self.run_token_command(common_name, cmd_line_options)
+                        if not(token is None):
+                          cert_filename = self.ssl_name_pattern.format(
+                              cert_dir=self.ssl_cert_dir,
+                              cert_name=cert_name,
+                              cert_type=cert_type,
+                              extension="cert.pem",
+                          )
 
-                        cert_filename = self.ssl_name_pattern.format(
-                            cert_dir=self.ssl_cert_dir,
-                            cert_name=cert_name,
-                            cert_type=cert_type,
-                            extension="cert.pem",
-                        )
+                          key_filename = self.ssl_name_pattern.format(
+                              cert_dir=self.ssl_cert_dir,
+                              cert_name=cert_name,
+                              cert_type=cert_type,
+                              extension="key.pem",
+                          )
 
-                        key_filename = self.ssl_name_pattern.format(
-                            cert_dir=self.ssl_cert_dir,
-                            cert_name=cert_name,
-                            cert_type=cert_type,
-                            extension="key.pem",
-                        )
-
-                        if "certificates" == self.mode:
-                            key, cert = self.run_ssl_cert_command(common_name, token, options)
-                            self.step_pillar["step"]["certificates"][cert_type][cert_name] = {
-                                "key_filename": key_filename,
-                                "cert_filename": cert_filename,
-                                "cert": cert,
-                                "key": key,
-                            }
-                        elif "tokens" == self.mode:
-                            self.step_pillar["step"]["certificates"][cert_type][cert_name] = {
-                                "key_filename": key_filename,
-                                "cert_filename": cert_filename,
-                                "token": token,
-                                "options": options,
-                            }
+                          if "certificates" == self.mode:
+                              key, cert = self.run_ssl_cert_command(common_name, token, options)
+                              self.step_pillar["step"]["certificates"][cert_type][cert_name] = {
+                                  "key_filename": key_filename,
+                                  "cert_filename": cert_filename,
+                                  "cert": cert,
+                                  "key": key,
+                              }
+                          elif "tokens" == self.mode:
+                              self.step_pillar["step"]["certificates"][cert_type][cert_name] = {
+                                  "key_filename": key_filename,
+                                  "cert_filename": cert_filename,
+                                  "token": token,
+                                  "options": options,
+                              }
                         # else:
                         # raise error similar to what dmach does in pass
 
