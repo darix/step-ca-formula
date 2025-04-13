@@ -159,8 +159,6 @@ step_ca_provisioner_{{ provisioner_name }}_settings:
     - config: {{ provisioner_data.settings | json }}
     - prereq:
       - {{ section_name }}
-    - require:
-      - {{ section_name }}
       {%- endif %}
 
       {%- if local_ca_user and local_ca_user == provisioner_name %}
