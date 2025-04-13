@@ -57,9 +57,14 @@ step:
       lifetime: 60m
   ssh:
     sign_hosts_certs: True
+    # TODO:
+    # deploy_user_ca: False
+    # TODO
+    # deploy_cert_authority: False
     principals:
       - {{ grains.id }}
   client_config:
+    deploy_root_from_salt_mine: False
     # possible modes:
     #
     # tokens -> key/cert are generated on the minion and signed with token authentication

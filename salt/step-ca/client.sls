@@ -50,4 +50,73 @@ def run():
             ]
         },
     }
+
+    if __pillar__.get("step:client_config:deploy_root_from_salt_mine", False):
+        ssl_root_cert_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssl_root_certificate')
+        if len(ssl_root_cert_mine) > 0:
+
+            root_cert_states = []
+
+            for ca_host, cert_data in ssl_root_cert_mine.items():
+
+                cleaned_ca_host = ca_host.replace('.','_')
+                root_cert_state = f"step_ca_root_cert_{cleaned_ca_host}"
+                root_cert_states.append(root_cert_state)
+
+                config[root_cert_state] = {
+                    "file.managed": [
+                        {"user": "root"},
+                        {"group": "root"},
+                        {"mode": "0644"},
+                        {"name": f"/usr/share/pki/trust/anchors/{root_cert_state}.pem"},
+                        {"contents": cert_data}
+                    ]
+                }
+
+            config["ca_certificates_update"] = {
+                "cmd.run": [
+                    {"name": "/usr/sbin/update-ca-certificates"},
+                    {"onchanges": root_cert_states},
+                    {"require":   root_cert_states},
+                ]
+            }
+
+    # if __pillar__.get("step:ssh:deploy_user_ca", False):
+    #     TODO: this needs some code to handle which domains we expect by this host CA to be signed
+    #     ssh_host_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssh_host_ca_pubkey')
+    #     if len(ssh_host_mine) > 0:
+    #         file_content = []
+    #         for ca_host, cert_data in ssh_host_mine.items():
+    #             file_content.append(f"# {ca_host}")
+    #             file_content
+
+    if __pillar__.get("step:ssh:deploy_user_ca", False):
+        ssh_user_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssh_user_ca_pubkey')
+
+        if len(ssh_user_mine) > 0:
+            file_content = []
+            for ca_host, cert_data in ssh_user_mine.items():
+                file_content.append(f"# CA Host: {ca_host}")
+                file_content.append(cert_data)
+                root_cert_state = "ssh_user_ca_pubkey"
+                config[root_cert_state] = {
+                    "file.managed": [
+                        {"user": "root"},
+                        {"group": "root"},
+                        {"mode": "0644"},
+                        {"name": f"/etc/ssh/ssh_user_ca_key.pub"},
+                        {"contents": "\n".join(file_content)}
+                    ],
+                }
+
+                config["ssh_user_ca_sshd_reload"] = {
+                    "cmd.run" : [
+                        {"name":   "/bin/systemctl reload sshd.service"},
+                        {"onlyif": "/bin/systemctl is-active sshd.service"},
+                        {"onchanges": [root_cert_state]},
+                        {"require":   [root_cert_state]}
+                    ]
+                }
+
+
     return config
