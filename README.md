@@ -73,6 +73,7 @@ One way to deploy certificates is in certificate mode. Then the final certs will
 ```
 nodegroups:
   step_ca_cert_mode_force_deploy_nodes: "I@step:client_config:certificate_mode:certificates and I@step:client_config:force_deploy:True"
+```
 
 That allows you to add a systemd timer/service around:
 
@@ -80,7 +81,25 @@ That allows you to add a systemd timer/service around:
 salt -N step_ca_cert_mode_force_deploy_nodes state.apply step-ca
 ```
 
-That will deploy certificates and also do all the associated scriptlets.
+That will deploy certificates and also do all the associated scriptlets.  
+
+## Standalone Salt Master Step-CA Client  
+
+This formula configures a Salt master to act as a Step-CA client. It enables the master to use an external Step CA to request tokens required for minion.  
+
+Include only the Salt client state to your exsiting salt master:
+```
+include:
+  - step-ca.salt-client
+```
+Set the pillar data for the Step CLI configuration:
+```
+step_salt_client:
+  step_url: "https://step-external.example.org"
+  step_fingerprint: "9c71f3ad9d931d4c4172efcd9bfc457c157dfef34a6829ab72dbb181ed29a083"
+  step_root: "/etc/pki/trust/anchors/TRUSTED-STEP-EXTERNAL-CA.crt.pem"
+  step_pass: "step-external_SUPER_SECRET"
+```
 
 ## License
 
