@@ -18,10 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-step_dir = "/etc/step"
+
 
 
 def run():
+    step_dir = (__pillar__.get("step", {}).get("client_config", {}).get("config_dir", {}).get("path", "/etc/step"))
+    step_dir_user = (__pillar__.get("step", {}).get("client_config", {}).get("config_dir", {}).get("user", "root"))
+    step_dir_group = (__pillar__.get("step", {}).get("client_config", {}).get("config_dir", {}).get("group", "root"))
+    step_dir_mode = (__pillar__.get("step", {}).get("client_config", {}).get("config_dir", {}).get("mode", "0644"))
+
     ca_pillar = __pillar__["step"]["client_config"]["ca"]
     context = {"ca-url": ca_pillar["url"], "fingerprint": ca_pillar["root_cert"]["fingerprint"]}
 
@@ -37,19 +42,45 @@ def run():
                 {"pkgs": [ "step-cli", {"step-cli-salt":">= 0.26.0"}, "openssl", "acl" ]},
             ]
         },
+        "step_config_dir": {
+            "file.managed": [
+                {"user": step_dir_user},
+                {"group": step_dir_group},
+                {"mode": step_dir_mode},
+                {"name": "{step_dir}/config".format(step_dir=step_dir)},
+                {"makedirs": True},
+                {"require": [ "step_client_package", ]},
+            ]
+        },
         "step_client_config": {
             "file.managed": [
                 {"user": "root"},
                 {"group": "root"},
                 {"mode": "0640"},
                 {"template": "jinja"},
-                {"require": [ "step_client_package", ]},
+                {"require": [ "step_client_package", "step_config_dir" ]},
                 {"name": "{step_dir}/config/defaults.json".format(step_dir=step_dir)},
                 {"source": "salt://step-ca/files/etc/step/config/defaults.json.j2"},
                 {"context": {"config": context} },
             ]
         },
     }
+
+    if "password" in ca_pillar["root_cert"]:
+      password_path = f"{step_dir}/config/password"
+      if "path" in ca_pillar["root_cert"]["password"]:
+         password_path = ca_pillar["root_cert"]["password"]["path"]
+
+      config["step_root_cert_password"] = {
+          "file.managed": [
+              {"user": ca_pillar["root_cert"]["password"]["user"]},
+              {"group": ca_pillar["root_cert"]["password"]["group"]},
+              {"mode": ca_pillar["root_cert"]["password"]["mode"]},
+              {"name": password_path},
+              {"contents": ca_pillar["root_cert"]["password"]["secret"]},
+              {"require": [ "step_client_package", "step_config_dir" ]},
+          ]
+      }
 
     if __pillar__.get("step:client_config:deploy_root_from_salt_mine", False):
         ssl_root_cert_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssl_root_certificate')
