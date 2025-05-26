@@ -51,6 +51,53 @@ def run():
         },
     }
 
+    if "ca" not in __pillar__["step"] and "salt" in __pillar__["step"] and __pillar__["step"]["salt"].get("setup_from_client_config", False) and "provisioner_password" in __pillar__["step"]["salt"]:
+
+        salt_step_dir = "/etc/salt/step"
+        salt_step_config_dir = f"{salt_step_dir}/config"
+        salt_step_defaults_file = f"{salt_step_config_dir}/defaults.json"
+        salt_step_password_file = f"{salt_step_config_dir}/password"
+
+        config["salt_step_directory"] = {
+            "file.directory": [
+              {"name":  salt_step_dir},
+              {"user":  "root"},
+              {"group": "salt"},
+              {"mode":  "0750"},
+            ]
+        }
+        config["salt_step_config_directory"] = {
+            "file.directory": [
+              {"name":  salt_step_config_dir},
+              {"user":  "root"},
+              {"group": "salt"},
+              {"mode":  "0750"},
+              {"require": ["salt_step_directory"]}
+            ]
+        }
+        config["salt_step_client_config"] = {
+            "file.managed": [
+                {"user": "root"},
+                {"group": "salt"},
+                {"mode": "0640"},
+                {"template": "jinja"},
+                {"require": [ "salt_step_config_directory", ]},
+                {"name": salt_step_defaults_file},
+                {"source": "salt://step-ca/files/etc/step/config/defaults.json.j2"},
+                {"context": {"config": context} },
+            ]
+        }
+        config["salt_step_client_password"] = {
+            "file.managed": [
+                {"user": "root"},
+                {"group": "salt"},
+                {"mode": "0640"},
+                {"require": [ "salt_step_config_directory", ]},
+                {"name": salt_step_password_file},
+                {"contents_pillar": "step:salt:provisioner_password" },
+            ]
+        }
+
     if __pillar__.get("step:client_config:deploy_root_from_salt_mine", False):
         ssl_root_cert_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssl_root_certificate')
         if len(ssl_root_cert_mine) > 0:

@@ -24,6 +24,12 @@ include:
   - includes.step-ca-mine-functions
 
 step:
+  # This is only meant for the case where the salt master is configured outside of the scope of the current salt master
+  # In this case the ca section should not exist in that case
+  #
+  # salt:
+  #  setup_from_client_config: True
+  #  provisioner_password: 'supersecure!!!'
   ca:
     enabled: True
     password: "this is just a test"
