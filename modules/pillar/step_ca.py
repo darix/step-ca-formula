@@ -68,7 +68,7 @@ class StepCACLient:
         self.cert_scopes = ["user", "host"]
 
         # ssh_host_dsa_key.pub  ssh_host_ecdsa_key.pub  ssh_host_ed25519_key.pub  ssh_host_rsa_key.pub
-        self.ssh_key_types = ["ecdsa", "ed25519", "rsa"]
+        self.ssh_key_types = self.pillar.get("step:ssh:host_key_types", ["ecdsa", "ed25519", "rsa"])
         self.step_pillar = {}
 
         self.cmd_env = {
@@ -243,18 +243,21 @@ class StepCACLient:
             pubkey_grains = __grains__["ssh"]["hostkeys"]["pubkeys"]
             for key_type, key in pubkey_grains.items():
                 # TODO: throw error if key_type is not in ssh_key_types list
-                token = self.run_token_command(self.minion_id, cmd_line_options)
-                if not(token is None):
-                    if "certificates" == self.mode:
-                        cert = self.run_ssh_cert_command(token, key, self.minion_id, principal_options)
-                        if cert:
+                if key_type in self.ssh_key_types:
+                    token = self.run_token_command(self.minion_id, cmd_line_options)
+                    if not(token is None):
+                        if "certificates" == self.mode:
+                            cert = self.run_ssh_cert_command(token, key, self.minion_id, principal_options)
+                            if cert:
+                                self.step_pillar["step"]["ssh"]["certs"][key_type] = {
+                                    "cert": cert,
+                                }
+                        elif "tokens" == self.mode:
                             self.step_pillar["step"]["ssh"]["certs"][key_type] = {
-                                "cert": cert,
+                                "token": token,
                             }
-                    elif "tokens" == self.mode:
-                        self.step_pillar["step"]["ssh"]["certs"][key_type] = {
-                            "token": token,
-                        }
+                else:
+                    log.info(f"Found host key for #{key_type} but it is not in our host_key_types list {self.ssh_key_types}. Skipping.")
 
     def do_ssl_certificates(self):
         if "step" in self.pillar and "certificates" in self.pillar["step"]:

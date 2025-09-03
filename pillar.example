@@ -67,6 +67,9 @@ step:
     # deploy_user_ca: False
     # TODO
     # deploy_cert_authority: False
+    # defaults to all ecdsa, rsa, ed25519 by default
+    host_key_types:
+      - ed25519
     principals:
       - {{ grains.id }}
   client_config:
