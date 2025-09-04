@@ -113,7 +113,7 @@ def run():
                     }
                 )
 
-            service_reload_deps.append(crt_path)
+            service_reload_deps.append(section_name)
 
             if uses_renewer:
                 config[section_name + "_renewer_service"] = {
@@ -153,16 +153,8 @@ def run():
         config["sshd_reload"] = {
             "cmd.run": [
                 {"name": sshd_reload_cmdline},
-                {
-                    "require": [
-                        sshd_config_snippet_file,
-                    ]
-                },
-                {
-                    "onchanges": [
-                        sshd_config_snippet_file,
-                    ]
-                },
+                {"require": service_reload_deps},
+                {"onchanges": service_reload_deps},
                 {"hide_output": True},
                 {"output_loglevel": "debug"},
             ]
