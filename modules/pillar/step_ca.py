@@ -240,7 +240,7 @@ class StepCACLient:
                 principal_options = self.list_to_options_string("principal", self.pillar["step"]["ssh"]["principals"])
             cmd_line_options += principal_options
 
-            pubkey_grains = __grains__["ssh"]["hostkeys"]["pubkeys"]
+            pubkey_grains = __grains__.get("ssh", {}).get("hostkeys", {}).get("pubkeys",{})
             for key_type, key in pubkey_grains.items():
                 # TODO: throw error if key_type is not in ssh_key_types list
                 if key_type in self.ssh_key_types:
