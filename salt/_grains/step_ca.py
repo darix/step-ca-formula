@@ -22,9 +22,11 @@ import glob
 import os.path
 import re
 
+import logging
+log = logging.getLogger(__name__)
 
 def ssh_pub_keys():
-    values = {}
+    pubkeys  = {}
 
     for path in glob.glob("/etc/ssh/ssh_host_*_key.pub"):
         match = re.search(r"/etc/ssh/ssh_host_(?P<key_type>\S+)_key.pub", path)
@@ -35,7 +37,26 @@ def ssh_pub_keys():
             continue
 
         with open(path, "r") as f:
-            values[key_type] = f.read()
+            pubkeys [key_type] = f.read()
 
-    result = {"ssh": {"hostkeys": {"pubkeys": values}}}
+    result = {"ssh": {"hostkeys": {"pubkeys": pubkeys }}}
+    client_config = __pillar__.get("step", {}).get("client_config", {})
+    force_mode =       client_config.get("force_deploy", False)
+    certificate_mode = client_config.get("certificate_mode", "token")
+    certificate_mode_compare = (certificate_mode == "certificates")
+
+    if force_mode and certificate_mode_compare:
+        needs_refresh = {}
+        for path in glob.glob("/etc/ssh/ssh_host_*_key-cert.pub"):
+            match = re.search(r"/etc/ssh/ssh_host_(?P<key_type>\S+)_key-cert.pub", path)
+            key_type = match.group("key_type")
+
+            if key_type == "dsa":
+                # plain "dsa" is not supported by step-ca
+                continue
+
+            r = os.system(f"/usr/sbin/step-ssl-cert-needs-renewal-for-salt {path}")
+            needs_refresh[key_type] = (r == 0)
+        result["ssh"]["hostkeys"]["need_refresh"] = needs_refresh
+
     return result
