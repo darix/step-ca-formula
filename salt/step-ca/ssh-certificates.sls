@@ -74,14 +74,9 @@ def run():
                 config[section_name] = {
                     section_type: [
                         {"name": cmdline},
-                        {
-                            "require": [
-                                "step_client_config",
-                            ]
-                        },
+                        {"require": ["step_client_config", ]},
                         {"hide_output": True},
                         {"output_loglevel": "debug"},
-                        {"onlyif": renewal_check_cmdline},
                     ],
                 }
 
@@ -95,12 +90,7 @@ def run():
                         {"group": "root"},
                         {"mode": "0640"},
                         {"contents": cert_data["cert"]},
-                        {"onlyif": renewal_check_cmdline},
-                        {
-                            "require": [
-                                "step_client_config",
-                            ]
-                        },
+                        {"require": [ "step_client_config", ]},
                     ]
                 }
 
