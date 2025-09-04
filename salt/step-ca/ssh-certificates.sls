@@ -105,13 +105,10 @@ def run():
                 }
 
             if not (force_deploy):
-                config[section_name][section_type].append(
-                    {
-                        "creates": [
-                            crt_path,
-                        ]
-                    }
-                )
+                config[section_name][section_type].extend([
+                    {"creates": [ crt_path, ]},
+                    {"onlyif": renewal_check_cmdline},
+                ])
 
             service_reload_deps.append(section_name)
 
