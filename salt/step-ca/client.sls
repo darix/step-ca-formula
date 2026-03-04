@@ -20,6 +20,9 @@
 
 step_dir = "/etc/step"
 
+import logging
+
+log = logging.getLogger(__name__)
 
 def run():
     ca_pillar = __pillar__["step"]["client_config"]["ca"]
@@ -127,6 +130,10 @@ def run():
                     {"require":   root_cert_states},
                 ]
             }
+        else:
+            log.error("[step-ca:client] Not root certificates found to deploy")
+    else:
+        log.error("[step-ca:client] Not deploying the root cert via salt-mine")
 
     # if __pillar__.get("step:ssh:deploy_user_ca", False):
     #     TODO: this needs some code to handle which domains we expect by this host CA to be signed
@@ -164,6 +171,10 @@ def run():
                         {"require":   [root_cert_state]}
                     ]
                 }
+        else:
+            log.error("[step-ca:client] Not ssh user CA certificates found to deploy")
+    else:
+        log.error("[step-ca:client] Not deploying the ssh user CA")
 
 
     return config
