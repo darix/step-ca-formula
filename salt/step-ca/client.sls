@@ -41,15 +41,16 @@ def run():
             ]
         },
         "step_client_config": {
-            "file.managed": [
+            "file.serialize": [
                 {"user": "root"},
                 {"group": "root"},
                 {"mode": "0640"},
                 {"template": "jinja"},
                 {"require": [ "step_client_package", ]},
                 {"name": "{step_dir}/config/defaults.json".format(step_dir=step_dir)},
-                {"source": "salt://step-ca/files/etc/step/config/defaults.json.j2"},
-                {"context": {"config": context} },
+                {'serializer': 'json'},
+                {'serializer_opts': {'indent': 2}},
+                {"dataset": context },
             ]
         },
     }
