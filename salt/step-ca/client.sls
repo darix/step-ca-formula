@@ -103,7 +103,7 @@ def run():
             ]
         }
 
-    if __pillar__.get("step:client_config:deploy_root_from_salt_mine", False):
+    if __salt__['pillar.get']("step:client_config:deploy_root_from_salt_mine", False):
         ssl_root_cert_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssl_root_certificate')
         if len(ssl_root_cert_mine) > 0:
 
@@ -137,7 +137,7 @@ def run():
     else:
         log.error("[step-ca:client] Not deploying the root cert via salt-mine")
 
-    # if __pillar__.get("step:ssh:deploy_user_ca", False):
+    # if __salt__['pillar.get']("step:ssh:deploy_user_ca", False):
     #     TODO: this needs some code to handle which domains we expect by this host CA to be signed
     #     ssh_host_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssh_host_ca_pubkey')
     #     if len(ssh_host_mine) > 0:
@@ -146,7 +146,7 @@ def run():
     #             file_content.append(f"# {ca_host}")
     #             file_content
 
-    if __pillar__.get("step:ssh:deploy_user_ca", False):
+    if __salt__['pillar.get']("step:ssh:deploy_user_ca", False):
         ssh_user_mine = __salt__['mine.get'](__grains__['id'], 'step_ca_ssh_user_ca_pubkey')
 
         if len(ssh_user_mine) > 0:
