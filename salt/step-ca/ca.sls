@@ -51,7 +51,7 @@ step_ca_password_file:
     - mode: 640
     - requires:
       - step_ca_package
-    - contents: {{ pillar.step.ca.password }}
+    - contents_pillar: step:ca:password
 
   {%- set cmdline_elements = ['/usr/bin/step', 'ca', 'init', '--password-file="/etc/step-ca/password.txt"'] %}
 
