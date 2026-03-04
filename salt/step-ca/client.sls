@@ -87,8 +87,9 @@ def run():
                 {"template": "jinja"},
                 {"require": [ "salt_step_config_directory", ]},
                 {"name": salt_step_defaults_file},
-                {"source": "salt://step-ca/files/etc/step/config/defaults.json.j2"},
-                {"context": {"config": context} },
+                {'serializer': 'json'},
+                {'serializer_opts': {'indent': 2}},
+                {"dataset": context },
             ]
         }
         config["salt_step_client_password"] = {
