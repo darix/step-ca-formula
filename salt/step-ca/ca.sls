@@ -1,3 +1,4 @@
+#!py
 #
 # step-ca-formula
 #
@@ -17,212 +18,211 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#
-# Copyright (C) 2022 SUSE LLC
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-{%- if 'ca' in pillar.step and 'enabled' in pillar.step.ca and pillar.step.ca.enabled %}
-  {%- set ca_pillar = pillar.step.ca %}
+import os
+import salt.utils.json as sujson
+import logging
+log = logging.getLogger("step/ca")
 
-# TODO: Install salt config
-step_ca_package:
-  pkg.installed:
-    - names:
-      - step-ca
-      - jq
+def run():
+  config={}
+  if __salt__['pillar.get']('step:ca:enabled', False):
+      ca_pillar = __salt__['pillar.get']('step:ca', {})
+      config['step_ca_package'] = {
+        'pkg.installed': [
+          {'pkgs': ['step-ca', 'jq']},
+        ]
+      }
 
-step_ca_password_file:
-  file.managed:
-    - name: /etc/step-ca/password.txt
-    - user: root
-    - group: '_step-ca'
-    - mode: 640
-    - requires:
-      - step_ca_package
-    - contents_pillar: step:ca:password
+      config['step_ca_password_file'] = {
+        'file.managed': [
+          { 'name':            '/etc/step-ca/password.txt' },
+          { 'user':            'root' },
+          { 'group':           '_step-ca' },
+          { 'mode':            '640' },
+          { 'requires':        ['step_ca_package'] },
+          { 'contents_pillar': 'step:ca:password' },
+        ]
+      }
 
-  {%- set cmdline_elements = ['/usr/bin/step', 'ca', 'init', '--password-file="/etc/step-ca/password.txt"'] %}
+      created_files = [
+        '/var/lib/step-ca/.step/secrets/root_ca_key',
+        '/var/lib/step-ca/.step/secrets/intermediate_ca_key',
+        '/var/lib/step-ca/.step/config/ca.json',
+        '/var/lib/step-ca/.step/config/defaults.json',
+        '/var/lib/step-ca/.step/certs/intermediate_ca.crt',
+        '/var/lib/step-ca/.step/certs/root_ca.crt',
+      ]
 
-  {%- do cmdline_elements.append('--deployment-type="{deployment_type}"'.format(deployment_type=ca_pillar.get("deployment_type", "standalone"))) %}
-  {%- do cmdline_elements.append('--address="{address}"'.format(address=ca_pillar.get("address", ":443" ))) %}
-  {%- do cmdline_elements.append('--with-ca-url="{ca_url}"'.format(ca_url=ca_pillar.get("ca_url", "https://" ~ grains.id ))) %}
-  {%- do cmdline_elements.append('--provisioner="{provisioner}"'.format(provisioner=ca_pillar.initial_provisioner)) %}
-  {%- do cmdline_elements.append('--name="{name}"'.format(name=ca_pillar.name)) %}
-  {%- if ca_pillar.get("ssh", True) %}
-    {%- do cmdline_elements.append('--ssh') %}
-  {%- endif %}
+      cmdline_elements = ['/usr/bin/step', 'ca', 'init', '--password-file="/etc/step-ca/password.txt"']
+      cmdline_elements.append('--deployment-type="{deployment_type}"'.format(deployment_type=ca_pillar.get("deployment_type", "standalone")))
+      cmdline_elements.append('--address="{address}"'.format(address=ca_pillar.get("address", ":443" )))
+      cmdline_elements.append('--with-ca-url="{ca_url}"'.format(ca_url=ca_pillar.get("ca_url", "https://{__salt__.['grains.get']('id')}" )))
+      cmdline_elements.append('--provisioner="{provisioner}"'.format(provisioner=ca_pillar['initial_provisioner']))
+      cmdline_elements.append('--name="{name}"'.format(name=ca_pillar['name']))
 
-  {%- if 'dns' in ca_pillar %}
-    {%- for dns_name in ca_pillar.dns %}
-      {%- do cmdline_elements.append('--dns="{dns_name}"'.format(dns_name=dns_name)) %}
-    {%- endfor %}
-  {%- else %}
-    {%- do cmdline_elements.append('--dns="{dns_name}"'.format(dns_name= grains.id)) %}
-  {%- endif %}
+      if ca_pillar.get("ssh", True):
+        cmdline_elements.append('--ssh')
+        created_files.extend([
+          '/var/lib/step-ca/.step/certs/ssh_host_ca_key.pub',
+          '/var/lib/step-ca/.step/certs/ssh_user_ca_key.pub',
+        ])
 
-step_ca_init:
-  cmd.run:
-    - name: {{ ' '.join(cmdline_elements) }}
-    - runas: _step-ca
-    - requires:
-      - step_ca_password_file:
-    - creates:
-      - /var/lib/step-ca/.step/secrets/root_ca_key
-      - /var/lib/step-ca/.step/secrets/intermediate_ca_key
-      - /var/lib/step-ca/.step/config/ca.json
-      - /var/lib/step-ca/.step/config/defaults.json
-      - /var/lib/step-ca/.step/certs/intermediate_ca.crt
-      - /var/lib/step-ca/.step/certs/root_ca.crt
-      {%- if ca_pillar.get("ssh", True) %}
-      - /var/lib/step-ca/.step/certs/ssh_host_ca_key.pub
-      - /var/lib/step-ca/.step/certs/ssh_user_ca_key.pub
-      {%- endif %}
+      if 'dns' in ca_pillar:
+        for dns_name in ca_pillar.get('dns', []):
+          cmdline_elements.append('--dns="{dns_name}"'.format(dns_name=dns_name))
+      else:
+        cmdline_elements.append('--dns="{dns_name}"'.format(dns_name=__salt__['grains.id']))
 
-step_ca_service:
-  service.running:
-    - name: step-ca.service
-    - reload: True
-    - requires:
-      - step_ca_init
 
-  {%- set local_ca_user = pillar.get("local_ca_user", None) %}
+      config['step_ca_init'] = {
+        'cmd.run': [
+          {'name': ' '.join(cmdline_elements)},
+          {'runas':    '_step-ca'},
+          {'requires': ['step_ca_password_file']},
+          {'creates':  created_files},
+        ]
+      }
 
-  {%- set active_provisioners = [] %}
-  {%- if 'provisioners' in ca_pillar %}
-    {%- for provisioner_name, provisioner_data in ca_pillar.provisioners.items() %}
+      config['step_ca_service'] = {
+        'service.running': [
+          {'name': 'step-ca.service'},
+          {'reload': True},
+          {'requires': ['step_ca_init']}
+        ]
+      }
 
-      {%- set cmdline_elements = ['/usr/bin/step', 'ca', 'provisioner', 'add', provisioner_name] %}
-      {%- set password_file = '/etc/step-ca/provisioner-' ~ provisioner_name ~ '-password.txt'%}
+      local_ca_user = __salt__['pillar.get']('local_ca_user', None)
 
-      {%- if provisioner_data.options.type == 'JWK' %}
-        {%- do cmdline_elements.append('--create') %}
-      {%- endif %}
+      for provisioner_name, provisioner_data in ca_pillar.get('provisioners',{}).items():
 
-      {%- for option_name, value in provisioner_data.options.items() %}
-        {%- if option_name == 'password' %}
-          {%- set value = password_file %}
-          {%- set option_name = 'password-file' %}
-        {%- endif %}
-        {%- if  (value is sameas true) %}
-          {%- do cmdline_elements.append('--{option_name}'.format(option_name=option_name)) %}
-        {%- else %}
-          {%- do cmdline_elements.append('--{option_name} "{option_value}"'.format(option_name=option_name, option_value=value )) %}
-        {%- endif %}
-      {%- endfor %}
+        cmdline_elements = ['/usr/bin/step', 'ca', 'provisioner', 'add', provisioner_name]
+        password_file = f'/etc/step-ca/provisioner-{provisioner_name}-password.txt'
+        section_name = f'step_ca_add_provisioner_{provisioner_name}'
 
-      {%- if 'settings' in provisioner_data %}
-      {%- endif %}
+        provisioner_options=provisioner_data.get('options', {})
 
-      {%- if 'password' in provisioner_data.options %}
-{{ password_file }}:
-  file.managed:
-    - user: root
-    - group: '_step-ca'
-    - mode: 640
-    - requires:
-      - step_ca_package
-    - contents: {{ provisioner_data.options.password }}
-      {%- endif %}
+        if provisioner_options.get('type') == 'JWK':
+          cmdline_elements.append('--create')
 
-      {%- set section_name = 'step_ca_add_provisioner_{provisioner_name}'.format(provisioner_name=provisioner_name) %}
-      {%- do active_provisioners.append(section_name) %}
-{{ section_name }}:
-  cmd.run:
-    - name:  {{ ' '.join(cmdline_elements) }}
-    - runas: _step-ca
-    - unless: /usr/sbin/step-ca-has-provisioner {{ provisioner_name }}
-    - require:
-      - step_ca_init
-      {%- if 'password' in provisioner_data.options %}
-      - {{ password_file }}
-      {%- endif %}
+        for option_name, value in provisioner_options.items():
+          if option_name == 'password':
+            value = password_file
+            option_name = 'password-file'
+          if isinstance(value, bool) and value:
+            cmdline_elements.append(f'--{option_name}')
+          else:
+            cmdline_elements.append(f'--{option_name} "{value}"')
 
-      {%- if 'settings' in provisioner_data %}
-step_ca_provisioner_{{ provisioner_name }}_settings:
-  module.run:
-    - name: step_ca.patch_provisioner_config
-    - needle: {{ provisioner_name }}
-    - config: {{ provisioner_data.settings | json }}
-    - require:
-      - {{ section_name }}
-      {%- endif %}
+        if 'password' in provisioner_options:
+          config[password_file] = {
+            'file.managed': [
+              {'user':  'root'},
+              {'group': '_step-ca'},
+              {'mode':  '0640'},
+              {'requires': ['step_ca_package']},
+              {'require_in': [section_name]},
+              {'contents': provisioner_options['password']},
+            ]
+          }
 
-      {%- if local_ca_user and local_ca_user == provisioner_name %}
-salt_step_directory:
-  file.directory:
-    - name: /etc/salt/step
-    - user: root
-    - group: salt
-    - mode: "0750"
-    - require:
-      - step_ca_init
+        config[section_name] = {
+          'cmd.run': [
+            {'name':  ' '.join(cmdline_elements)},
+            {'runas': '_step-ca'},
+            {'unless': f'/usr/sbin/step-ca-has-provisioner {provisioner_name}'},
+            {'require': ['step_ca_init']},
+            {'onchanges_in': ['step_ca_reload']}
+          ]
+        }
 
-salt_step_config_directory:
-  file.directory:
-    - name: /etc/salt/step/config
-    - user: root
-    - group: salt
-    - mode: "0750"
-    - require:
-      - salt_step_directory
+        if 'settings' in provisioner_data:
+          settings_section = f"step_ca_provisioner_{provisioner_name}_settings"
+          config[settings_section] = {
+            'module.run': [
+              {'name': 'step_ca.patch_provisioner_config'},
+              {'needle': provisioner_name },
+              {'config': provisioner_data['settings']},
+              {'require': [section_name]},
+              {'onchanges_in': ['step_ca_reload']}
+            ]
+          }
 
-{%-   set ca_defaults = salt.cp.get_file_str('/var/lib/step-ca/.step/config/defaults.json') | load_json %}
+        if local_ca_user and local_ca_user == provisioner_name:
+          config['salt_step_directory'] = {
+            'file.directory': [
+              {'name': '/etc/salt/step'},
+              {'user': 'root'},
+              {'group': 'root'},
+              {'mode':  '0750'},
+              {'requires': [section_name]},
+            ]
+          }
+          config['salt_step_config_directory'] = {
+            'file.directory': [
+              {'name': '/etc/salt/step/config'},
+              {'user': 'root'},
+              {'group': 'root'},
+              {'mode':  '0750'},
+              {'requires': ['salt_step_directory']},
+            ]
+          }
 
-{%-   set salt_root_cert = "/etc/salt/step/config/root.crt" %}
+          salt_root_cert = "/etc/salt/step/config/root.crt"
+          step_ca_defaults = '/var/lib/step-ca/.step/config/defaults.json'
 
-salt_step_copy_root_crt:
-  file.managed:
-    - name:     {{ salt_root_cert }}
-    - user:     root
-    - group:    salt
-    - mode:     "0640"
-    - require:
-      - salt_step_config_directory
-    - source: '/var/lib/step-ca/.step/certs/root_ca.crt'
+          config['salt_step_copy_root_crt'] = {
+            'file.copy': [
+              {'name':     salt_root_cert },
+              {'user':     'root'},
+              {'group':    'salt'},
+              {'mode':     "0640"},
+              {'require': ['salt_step_config_directory']},
+              { 'source': '/var/lib/step-ca/.step/certs/root_ca.crt' },
+            ]
+          }
+          config['salt_step_client_password'] = {
+            'file.managed': [
+              {'user':     'root'},
+              {'group':    'salt'},
+              {'mode':     '0640'},
+              {'name':     '/etc/salt/step/config/password'},
+              {'contents': provisioner_options['password']},
+              {'require':  ['salt_step_copy_root_crt']},
+            ]
+          }
+          if os.path.exists(step_ca_defaults):
+            ca_defaults = {}
+            with open(step_ca_defaults, 'r') as f:
+              ca_defaults = sujson.loads(f.read())
 
-salt_step_client_config:
-  file.managed:
-    - user:     root
-    - group:    salt
-    - mode:     "0640"
-    - template: jinja
-    - requires:
-      - salt_step_copy_root_crt
-    - name:     "/etc/salt/step/config/defaults.json"
-    - source:   "salt://step-ca/files/etc/step/config/defaults.json.j2"
-    - context:
-      "config":
-        "ca-url":       {{ ca_defaults["ca-url"] }}
-        "fingerprint":  {{ ca_defaults["fingerprint"] }}
-        "root":         {{ salt_root_cert }}
+            if len(ca_defaults) > 0:
+              step_client_config = {
+                'ca-url':      ca_defaults["ca-url"],
+                'fingerprint': ca_defaults["fingerprint"],
+                'root':        salt_root_cert,
+              }
 
-salt_step_client_password:
-  file.managed:
-    - user:     root
-    - group:    salt
-    - mode:     "0640"
-    - name:     /etc/salt/step/config/password
-    - contents: {{ provisioner_data.options.password }}
-    - require:
-      - salt_step_client_config
-      {%- endif %}
-    {%- endfor %}
+              config['salt_step_client_config'] = {
+                'file.serialize': [
+                  {'name':  '/etc/salt/step/config/defaults.json'},
+                  {'user':  'root'},
+                  {'group': 'salt'},
+                  {'mode':  '0640'},
+                  {'require':  ['salt_step_copy_root_crt']},
+                  {'serializer': 'json'},
+                  {'serializer_opts': {'indent': 2}},
+                  {'dataset': step_client_config},
+                ]
+              }
+            else:
+              log.error(f"Loading of the defaults from the CA failed {step_ca_defaults}")
+          else:
+            log.error(f"could not find {step_ca_defaults}")
 
-step_ca_reload:
-  cmd.run:
-    - name: /usr/bin/systemctl reload step-ca.service
-    - onlyif: /usr/bin/systemctl is-active step-ca.service
-  {%- endif %}
-{%- endif %}
+      config['step_ca_reload'] = {
+        'cmd.run': [
+          {'name':   '/usr/bin/systemctl reload step-ca.service'},
+          {'onlyif': '/usr/bin/systemctl is-active step-ca.service'},
+        ]
+      }
+  return config
