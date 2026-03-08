@@ -19,6 +19,9 @@
 #
 
 from salt.exceptions import SaltConfigurationError
+import os
+import logging
+log = logging.getLogger(__name__)
 
 # TODO: get the cert dir from the pillar
 step_path = "/etc/step"
@@ -41,6 +44,11 @@ def hookup_dependencies_into_service(config, state_name, state_type, deps):
 
 def run():
     config = {}
+
+    # dont try to run client parts if we are on the CA host but the CA isnt up yet
+    if __salt__['pillar.get']('step:ca:enabled', False) and not(os.path.exists('/var/lib/step-ca/.step/config/ca.json')):
+        log.error("Skipping client parts until the CA host is fully set up.")
+        return config
 
     step_pillar = __pillar__["step"]
 

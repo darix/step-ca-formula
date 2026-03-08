@@ -18,6 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+import logging
+log = logging.getLogger(__name__)
+
 # TODO: get the cert dir from the pillar
 step_path = "/etc/step"
 certificate_based_dir = "{step_path}/certs".format(step_path=step_path)
@@ -26,6 +30,11 @@ cmdline_env = {"STEPPATH": step_path}
 
 def run():
     config = {}
+
+    # dont try to run client parts if we are on the CA host but the CA isnt up yet
+    if __salt__['pillar.get']('step:ca:enabled', False) and not(os.path.exists('/var/lib/step-ca/.step/config/ca.json')):
+        log.error("Skipping client parts until the CA host is fully set up.")
+        return config
 
     ssh_key_types = ["ecdsa", "ed25519", "rsa"]
 
