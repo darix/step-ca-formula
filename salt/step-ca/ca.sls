@@ -161,7 +161,7 @@ def run():
             'file.directory': [
               {'name': '/etc/salt/step/config'},
               {'user': 'root'},
-              {'group': 'root'},
+              {'group': 'salt'},
               {'mode':  '0750'},
               {'requires': ['salt_step_directory']},
             ]
