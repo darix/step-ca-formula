@@ -183,7 +183,7 @@ ExecStartPost=
 
                 if "tokens" == certificate_mode:
                     # we do not need to specify the --san entries here as they are encoded in the token.
-                    token = cert_data["token"]
+                    token = cert_data.get("token", "")
                     if token == "":
                         raise SaltConfigurationError(f"Can not create cert for {common_name} with empty token")
 
