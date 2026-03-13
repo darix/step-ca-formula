@@ -247,8 +247,8 @@ def run():
           config["ca_certificates_update"] = {
               "cmd.run": [
                   {"name": "/usr/sbin/update-ca-certificates"},
-                  {"onchanges": root_cert_states},
-                  {"require":   root_cert_states},
+                  {"onchanges": [root_cert_state]},
+                  {"require":   [root_cert_state]},
               ]
           }
 
