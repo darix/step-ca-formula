@@ -232,26 +232,25 @@ def run():
           #       {'require_in': [root_cert_state]},
           #     ]
           #   }
-          if not(__salt__['pillar.get']("step:client_config:deploy_root_from_salt_mine", False)):
-            cleaned_ca_host = __salt__['grains.get']('id').replace('.','_')
-            root_cert_state = f"step_ca_root_cert_{cleaned_ca_host}"
-            config[root_cert_state] = {
-                "file.copy": [
-                    {"user": "root"},
-                    {"group": "root"},
-                    {"mode": "0644"},
-                    {'source':  '/var/lib/step-ca/.step/certs/root_ca.crt'},
-                    {"name": f"/usr/share/pki/trust/anchors/{root_cert_state}.pem"},
-                    {'require': ['step_ca_init']}
-                ]
-            }
-            config["ca_certificates_update"] = {
-                "cmd.run": [
-                    {"name": "/usr/sbin/update-ca-certificates"},
-                    {"onchanges": root_cert_states},
-                    {"require":   root_cert_states},
-                ]
-            }
+          cleaned_ca_host = __salt__['grains.get']('id').replace('.','_')
+          root_cert_state = f"step_ca_root_cert_{cleaned_ca_host}"
+          config[root_cert_state] = {
+              "file.copy": [
+                  {"user": "root"},
+                  {"group": "root"},
+                  {"mode": "0644"},
+                  {'source':  '/var/lib/step-ca/.step/certs/root_ca.crt'},
+                  {"name": f"/usr/share/pki/trust/anchors/{root_cert_state}.pem"},
+                  {'require': ['step_ca_init']}
+              ]
+          }
+          config["ca_certificates_update"] = {
+              "cmd.run": [
+                  {"name": "/usr/sbin/update-ca-certificates"},
+                  {"onchanges": root_cert_states},
+                  {"require":   root_cert_states},
+              ]
+          }
 
       config['step_ca_reload'] = {
         'cmd.run': [
