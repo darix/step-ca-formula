@@ -233,7 +233,7 @@ def run():
           #     ]
           #   }
           cleaned_ca_host = __salt__['grains.get']('id').replace('.','_')
-          root_cert_state = f"step_ca_root_cert_{cleaned_ca_host}"
+          root_cert_state = f"step_ca_root_cert_{cleaned_ca_host}_in_ca"
           config[root_cert_state] = {
               "file.copy": [
                   {"user": "root"},
@@ -244,7 +244,7 @@ def run():
                   {'require': ['step_ca_init']}
               ]
           }
-          config["ca_certificates_update"] = {
+          config["ca_certificates_update_in_ca"] = {
               "cmd.run": [
                   {"name": "/usr/sbin/update-ca-certificates"},
                   {"onchanges": [root_cert_state]},
@@ -252,7 +252,7 @@ def run():
               ]
           }
 
-      config['step_ca_reload'] = {
+      config['step_ca_reload_in_ca'] = {
         'cmd.run': [
           {'name':   '/usr/bin/systemctl reload step-ca.service'},
           {'onlyif': '/usr/bin/systemctl is-active step-ca.service'},
