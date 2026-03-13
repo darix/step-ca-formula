@@ -30,6 +30,9 @@ cmdline_env = {"STEPPATH": step_path}
 
 def run():
     config = {}
+    if not(os.path.exists('/etc/ssh/sshd_config.d/')):
+      log.error("no sshd deployed on the machine. Skipping ssh client part.")
+      return config
 
     # dont try to run client parts if we are on the CA host but the CA isnt up yet
     if __salt__['pillar.get']('step:ca:enabled', False) and not(os.path.exists('/var/lib/step-ca/.step/config/ca.json')):
