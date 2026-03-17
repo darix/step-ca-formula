@@ -62,9 +62,13 @@ def run():
     config = {}
 
     # dont try to run client parts if we are on the CA host but the CA isnt up yet
-    if __salt__['pillar.get']('step:ca:enabled', False) and not(os.path.exists('/var/lib/step-ca/.step/config/ca.json')):
-        log.error("Skipping client parts until the CA host is fully set up.")
-        return config
+    if __salt__['pillar.get']('step:ca:enabled', False):
+        if not os.path.exists('/var/lib/step-ca/.step/config/ca.json'):
+            log.error("Skipping client parts until the CA host is fully set up.")
+            return config
+        if not __salt__['service.status']('step-ca'):
+            log.error("Skipping client parts until step-ca.service is running.")
+            return config
 
     step_pillar = __pillar__["step"]
 

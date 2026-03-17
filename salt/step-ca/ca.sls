@@ -86,6 +86,7 @@ def run():
       config['step_ca_service'] = {
         'service.running': [
           {'name': 'step-ca.service'},
+          {'enable': True},
           {'reload': True},
           {'require': ['step_ca_init']}
         ]
