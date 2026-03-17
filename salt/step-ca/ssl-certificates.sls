@@ -19,6 +19,8 @@
 #
 
 from salt.exceptions import SaltConfigurationError
+from salt.utils.x509 import load_cert
+import cryptography
 import os
 import logging
 log = logging.getLogger(__name__)
@@ -41,6 +43,20 @@ def hookup_dependencies_into_service(config, state_name, state_type, deps):
         config[state_name][state_type].append({"require_in":   deps})
         config[state_name][state_type].append({"onchanges_in": deps})
 
+def san_matches_cert(certpath, new_san_list=[]):
+    if os.path.exists(certpath):
+        new_san_list.sort()
+        loaded_cert = load_cert(certpath)
+        loaded_cert_extensions_san = loaded_cert.extensions.get_extension_for_class(cryptography.x509.SubjectAlternativeName)
+        current_san_list = []
+        for san in loaded_cert_extensions_san.value:
+            current_san_list.append(str(san.value))
+        current_san_list.sort()
+        comparison_result = current_san_list == new_san_list
+        log.error(f"step-ca: {comparison_result} current san list: {current_san_list} new san list: {new_san_list}")
+        return comparison_result
+    else:
+        return False
 
 def run():
     config = {}
@@ -114,6 +130,11 @@ def run():
 
                 if "cn" in cert_data:
                     common_name = cert_data["cn"]
+
+                san_entries = cert_data.get('san', [])
+
+                only_if_needed =  not (force_deploy) and san_matches_cert(crt_path, san_entries)
+                log.error(f"step-ca: onlfy_if_needed: {only_if_needed}")
 
                 section_name = "step_client_{cert_type}_{cert_name}".format(
                     cert_type=cert_type,
@@ -218,7 +239,7 @@ ExecStartPost=
                             },
                         ]
                     }
-                    if not (force_deploy):
+                    if only_if_needed:
                         config[section_name + "_token_cmd"]["cmd.run"].append(
                             {"onlyif": renewal_check_cmdline}
                         )
@@ -264,7 +285,7 @@ ExecStartPost=
                             },
                         ]
                     }
-                    if not (force_deploy):
+                    if only_if_outdated:
                         config[section_name + "_key"]["file.managed"].append(
                             {"onlyif": renewal_check_cmdline}
                         )
