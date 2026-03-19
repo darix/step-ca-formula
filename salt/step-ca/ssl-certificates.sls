@@ -289,7 +289,7 @@ ExecStartPost=
                             },
                         ]
                     }
-                    if only_if_outdated:
+                    if only_if_needed:
                         config[section_name + "_key"]["file.managed"].append(
                             {"onlyif": renewal_check_cmdline}
                         )
