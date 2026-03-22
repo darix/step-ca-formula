@@ -317,17 +317,24 @@ ExecStartPost=
                 if ssl_merged_certificates:
                     drop_in_deps.append(section_name + "_combined")
 
+                    unless_components = [
+                        f"test -f {full_path}",
+                        f"test {full_path} -nt {crt_path}",
+                        f"test {full_path} -nt {key_path}",
+                    ]
+                    if ssl_generate_dhparams:
+                        unless_components.append(f"test {full_path} -nt {dhparam_file}")
+                    unless_cmdline_combined = " && ".join(unless_components)
+
                     config[section_name + "_combined"] = {
                         "cmd.run": [
                             {"name": combine_cmdline},
                             {"hide_output": True},
                             {"output_loglevel": "debug"},
-                            {"require":   combine_deps},
-                            {"onchanges": combine_deps},
+                            {"require": combine_deps},
+                            {"unless":  unless_cmdline_combined},
                         ]
                     }
-                    if not (force_deploy):
-                        config[section_name + "_combined"]["cmd.run"].append({"creates": full_path})
 
                     hookup_dependencies_into_service(config, section_name + "_combined", "cmd.run", require_in_affected_services)
 
