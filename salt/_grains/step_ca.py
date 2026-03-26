@@ -55,7 +55,7 @@ def ssh_pub_keys():
                 # plain "dsa" is not supported by step-ca
                 continue
 
-            r = os.system(f"/usr/sbin/step-ssl-cert-needs-renewal-for-salt {path}")
+            r = os.system(f"/usr/sbin/step-ssh-cert-needs-renewal-for-salt {path}")
             needs_refresh[key_type] = (r == 0)
         result["ssh"]["hostkeys"]["need_refresh"] = needs_refresh
 
