@@ -354,7 +354,7 @@ ExecStartPost=
                                         {"acl_name":  acl_name},
                                         {"perms":     acl_perms},
                                         {"require":   drop_in_deps},
-                                        {"onchanges": drop_in_deps},
+                                        # {"onchanges": drop_in_deps},
                                     ]
                                 }
 
