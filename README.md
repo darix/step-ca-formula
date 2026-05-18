@@ -56,10 +56,10 @@ ext_pillar:
 
 ## cfgmgmt-template integration
 
-if you are using our [cfgmgmt-template](https://github.com/darix/cfgmgmt-template) as a starting point the saltmaster you can simplify the setup with:
+if you are using our [cfgmgmt-template](https://codeberg.org/salted-geeko/cfgmgmt-template) as a starting point the saltmaster you can simplify the setup with:
 
 ```
-git submodule add https://github.com/darix/step-ca-formula formulas/step-ca
+git submodule add https://codeberg.org/salted-geeko/step-ca-formula formulas/step-ca
 ln -s /srv/cfgmgmt/formulas/step-ca/config/enable_step_ca.conf /etc/salt/master.d/
 systemctl restart saltmaster
 ```
