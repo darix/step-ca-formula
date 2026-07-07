@@ -22,40 +22,41 @@ def _get_step_executable():
     else:
         raise SaltRenderError("step unavailable")
 
-def _reencrypt_jwt(old_jwt, new_password):
-  step_executable = _get_step_executable
-  # Make sure environment variable HOME is set, since Pass looks for the
-  # password-store under ~/.password-store.
-  env = os.environ.copy()
-  env["HOME"] = os.path.expanduser("~")
-  cmd_decrypt = "step crypto jwe decrypt --password-file=/etc/step-ca/password.txt".split(' ')
-  cmd_encrypt = "step crypto jwe encrypt --alg PBES2-HS256+A128KW".split(' ')
-  cmd_jose    = "step crypto jose format".split(' ')
-  try:
-      # This fails with a complaint "cant not find /dev/tty"
-      proc_decrypt = Popen(cmd_decrypt,                            stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
-      proc_encrypt = Popen(cmd_encrypt, stdin=proc_decrypt.stdout, stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
-      proc_jose    = Popen(cmd_jose,    stdin=proc_encrypt.stdout, stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
-      proc_decrypt.stdout.close()
-      proc_encrypt.stdout.close()
-      decrypt_data, decrypt_error = proc_decrypt.communicate(old_jwt)
-      decrypt_returncode          = proc_decrypt.returncode
+# def _reencrypt_jwt(old_jwt, new_password):
+#   step_executable = _get_step_executable
+#   # Make sure environment variable HOME is set, since Pass looks for the
+#   # password-store under ~/.password-store.
+#   env = os.environ.copy()
+#   env["HOME"] = os.path.expanduser("~")
+#   cmd_decrypt = "step crypto jwe decrypt --password-file=/etc/step-ca/password.txt".split(' ')
+#   cmd_encrypt = "step crypto jwe encrypt --password-file=/etc/step-ca/new_password.txt --alg PBES2-HS256+A128KW".split(' ')
+#   cmd_jose    = "step crypto jose format".split(' ')
+#   try:
+#       # This fails with a complaint "cant not find /dev/tty"
+#       proc_decrypt = Popen(cmd_decrypt,                            stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
+#       proc_encrypt = Popen(cmd_encrypt, stdin=proc_decrypt.stdout, stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
+#       proc_jose    = Popen(cmd_jose,    stdin=proc_encrypt.stdout, stdout=PIPE, stderr=PIPE, env=env, encoding="utf-8")
+#       # proc_decrypt.stdout.close()
+#       # proc_encrypt.stdout.close()
+#       decrypt_data, decrypt_error = proc_decrypt.communicate(old_jwt)
+#       decrypt_returncode          = proc_decrypt.returncode
 
-      encrypt_data, encrypt_error = proc_encrypt.communicate(input=new_password.strip() + "\n")
-      encrypt_returncode          = proc_encrypt.returncode
+#       encrypt_data, encrypt_error = proc_encrypt.communicate(input=new_password.strip() + "\n")
+#       encrypt_returncode          = proc_encrypt.returncode
 
-      jose_data, jose_error       = proc_jose.communicate()
-      jose_returncode             = proc_jose.returncode
+#       jose_data, jose_error       = proc_jose.communicate()
+#       jose_returncode             = proc_jose.returncode
 
-  except (OSError, UnicodeDecodeError) as e:
-      step_data, step_error = "", str(e)
-      step_returncode = 1
+#   except (OSError, UnicodeDecodeError) as e:
+#       step_data, step_error = "", str(e)
+#       step_returncode = 1
 
-  log.error(f"encrypt: rc:{encrypt_returncode} d:'{encrypt_data}' e:'{encrypt_error}'")
-  log.error(f"decrypt: rc:{decrypt_returncode} d:'{decrypt_data}' e:'{decrypt_error}'")
-  log.error(f"jose:    rc:{jose_returncode} d:'{jose_data}' e:'{jose_error}'")
+#   log.error(f"jwe: {old_jwt}")
+#   log.error(f"jwe: encrypt: rc:{encrypt_returncode} d:'{encrypt_data}' e:'{encrypt_error}'")
+#   log.error(f"jwe: decrypt: rc:{decrypt_returncode} d:'{decrypt_data}' e:'{decrypt_error}'")
+#   log.error(f"jwe: jose:    rc:{jose_returncode} d:'{jose_data}' e:'{jose_error}'")
 
-  return jose_data.rstrip("\r\n")
+#   return jose_data.rstrip("\r\n")
 
 def _write_file_as_step_ca(new_filename, content, new_umask=0o077):
   old_umask = os.umask(new_umask)
@@ -100,10 +101,10 @@ def update_main_provisioner(name):
     return ret
 
   # # decrypted_key = _run_step_sub_command(, expect_output=True)
-  # new_encrypted_jwt = _reencrypt_jwt(old_encrypted_jwt, new_password)
-  # _write_file_as_step_ca('/var/lib/step-ca/newjwt', new_encrypted_jwt.encode())
+  new_encrypted_jwt = _reencrypt_jwt(old_encrypted_jwt, new_password)
+  _write_file_as_step_ca('/var/lib/step-ca/newjwt', new_encrypted_jwt.encode())
 
-  ret["comment"] = f"Implementation pending as recreating the shell pipe in python did not work."
+  # ret["comment"] = f"Implementation pending as recreating the shell pipe in python did not work."
   return ret
 
 def read_old_password_file():
