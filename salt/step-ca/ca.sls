@@ -211,7 +211,7 @@ def run():
                   {'mode':  '0640'},
                   {'require':  ['salt_step_copy_root_crt']},
                   {'serializer': 'json'},
-                  {'serializer_opts': {'indent': 2}},
+                  {'serializer_opts': [{'indent': 2}]},
                   {'dataset': step_client_config},
                 ]
               }

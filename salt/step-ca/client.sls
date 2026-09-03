@@ -48,7 +48,7 @@ def run():
                 {"require": [ "step_client_package", ]},
                 {"name": "{step_dir}/config/defaults.json".format(step_dir=step_dir)},
                 {'serializer': 'json'},
-                {'serializer_opts': {'indent': 2}},
+                {'serializer_opts': [{'indent': 2}]},
                 {"dataset": context },
             ]
         },
@@ -86,7 +86,7 @@ def run():
                 {"require": [ "salt_step_config_directory", ]},
                 {"name": salt_step_defaults_file},
                 {'serializer': 'json'},
-                {'serializer_opts': {'indent': 2}},
+                {'serializer_opts': [{'indent': 2}]},
                 {"dataset": context },
             ]
         }
