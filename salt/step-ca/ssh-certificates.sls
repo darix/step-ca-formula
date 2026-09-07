@@ -47,6 +47,7 @@ def needs_deployment(path, datetime_in_14days, principals):
     #   log.debug(f"SSH Certificate {path} needs renewal r:{return_val} p:{principal_return_val} {principals} {cert_principals} d:{cert.valid_after} < {datetime_in_14days} = {date_return_val}")
 
     return return_val
+  return True
 
 def run():
     config = {}
