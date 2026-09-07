@@ -68,6 +68,7 @@ class StepCACLient:
         self.cert_scopes = ["user", "host"]
 
         # ssh_host_dsa_key.pub  ssh_host_ecdsa_key.pub  ssh_host_ed25519_key.pub  ssh_host_rsa_key.pub
+        # "mldsa44_ed25519" https://github.com/smallstep/certificates/issues/2717
         self.ssh_key_types = self.pillar.get("step:ssh:host_key_types", ["ecdsa", "ed25519", "rsa"])
         self.step_pillar = {}
 

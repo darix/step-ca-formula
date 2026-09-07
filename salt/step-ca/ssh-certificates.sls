@@ -18,6 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from datetime import datetime
+
+from cryptography.hazmat.primitives.serialization import (
+    load_ssh_public_identity,
+)
+
 import os
 import logging
 log = logging.getLogger(__name__)
@@ -27,6 +33,20 @@ step_path = "/etc/step"
 certificate_based_dir = "{step_path}/certs".format(step_path=step_path)
 cmdline_env = {"STEPPATH": step_path}
 
+def needs_deployment(path, datetime_in_14days, principals):
+  if os.path.exists(path):
+    cert = load_ssh_public_identity(open(path, "rb").read())
+    cert_principals = [str(x, encoding="UTF-8") for x in cert.valid_principals]
+    cert_principals.sort()
+    principal_return_val = principals != cert_principals
+    date_return_val      = cert.valid_before < datetime_in_14days
+
+    return_val = principal_return_val or date_return_val
+
+    # if return_val:
+    #   log.debug(f"SSH Certificate {path} needs renewal r:{return_val} p:{principal_return_val} {principals} {cert_principals} d:{cert.valid_after} < {datetime_in_14days} = {date_return_val}")
+
+    return return_val
 
 def run():
     config = {}
@@ -57,8 +77,13 @@ def run():
 
     if "ssh" in step_pillar and "sign_hosts_certs" in step_pillar["ssh"] and step_pillar["ssh"]["sign_hosts_certs"] and "certs" in step_pillar["ssh"]:
         ssh_pillar = step_pillar["ssh"]["certs"]
+        principals = step_pillar["ssh"]["principals"]
+        principals.sort()
 
         ssh_hosts_keys_config = ""
+
+        # TODO make the number of days configurable - would also ned to be fixed in the step-cli-salt package at the same time.
+        datetime_in_14days = int(datetime.now().strftime('%s'))+(86400*14)
 
         for key_type, cert_data in ssh_pillar.items():
             host_id = __grains__["id"]
@@ -78,6 +103,8 @@ def run():
             ssh_hosts_keys_config += "HostCertificate /etc/ssh/ssh_host_{key_type}_key-cert.pub\n".format(key_type=key_type)
 
             renewal_check_cmdline = "/usr/sbin/step-ssh-cert-needs-renewal-for-salt {crt_path}".format(crt_path=crt_path)
+
+            cert_needs_deployment = needs_deployment(crt_path, datetime_in_14days, principals)
 
             section_type = None
             if "token" in cert_data:
@@ -110,7 +137,7 @@ def run():
                     ]
                 }
 
-            if not (force_deploy):
+            if not (force_deploy or cert_needs_deployment):
                 config[section_name][section_type].extend([
                     {"creates": [ crt_path, ]},
                     {"onlyif": renewal_check_cmdline},
